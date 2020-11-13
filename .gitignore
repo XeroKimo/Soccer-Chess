@@ -1,0 +1,15 @@
+
+/*
+/*/
+
+!.gitignore
+!/Assets
+!/Assets/*
+!/Packages
+!/Packages/*
+!/ProjectSettings
+!/ProjectSettings/*
+!/TemplateData
+!/TemplateData/*
+!/Build
+!/Build/*
