@@ -55,6 +55,7 @@ public class GameBoard : MonoBehaviour
         }
 
         piece.position = position;
+        piece.raycastCollider.size = boardSize;
     }
 
 
