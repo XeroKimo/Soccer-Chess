@@ -25,15 +25,25 @@ public class GameState : MonoBehaviour
     public void RaycastBoardTarget()
     {
         Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-        Debug.Log(worldMousePos);
-        if(!gameBoard.InBoardRangeWorldSpace(worldMousePos))
+
+        Vector2Int selectedBoardPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos);
+        if(!gameBoard.IsInBoardRange(selectedBoardPosition))
         {
             selectedPiece = null;
         }
         else
         {
-            Debug.Log(GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos));
-            selectedPiece = gameBoard.GetBoardPieceAt(GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos)) as ChessPiece;
+            if(selectedPiece)
+            {
+                if(selectedPiece.position != selectedBoardPosition)
+                    gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
+                selectedPiece = null;
+            }
+            else
+            {
+
+                selectedPiece = gameBoard.GetBoardPieceAt(selectedBoardPosition) as ChessPiece;
+            }
         }
     }
 

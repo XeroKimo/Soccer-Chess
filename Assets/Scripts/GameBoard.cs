@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+struct BoardCell
+{
+    public Vector2Int position;
+    public BoardPiece piece;
+}
 
 public class GameBoard : MonoBehaviour
 {
@@ -12,7 +17,10 @@ public class GameBoard : MonoBehaviour
     [SerializeField]
     Vector2 m_cellSize = new Vector2(1, 1);
 
+    BoardCell[,] m_boardCells;
+
     List<BoardPiece> m_boardPieces = new List<BoardPiece>(PieceCount);
+
 
     public Vector2Int boardSize { get => m_boardSize; }
     public Vector2 cellSize { get => m_cellSize; }
@@ -22,6 +30,14 @@ public class GameBoard : MonoBehaviour
 
     private void Awake()
     {
+        m_boardCells = new BoardCell[boardSize.y, boardSize.x];
+        for(int y = 0; y < boardSize.y; y++)
+        {
+            for(int x = 0; x < boardSize.x; x++)
+            {
+                m_boardCells[y, x].position = new Vector2Int(x, y);
+            }
+        }
     }
 
     // Start is called before the first frame update
@@ -55,11 +71,20 @@ public class GameBoard : MonoBehaviour
         }
     }
 
+    public bool MovePiece(BoardPiece piece, Vector2Int newPosition)
+    {
+        if(IsPositionOccupied(newPosition))
+            return false;
+
+        SetBoardCellPieceAt(newPosition, piece);
+        return true;
+    }
+
     public void RegisterPiece(BoardPiece piece, Vector2Int position)
     {
         m_boardPieces.Add(piece);
 
-        Debug.Assert(InBoardRangeBoardSpace(position),
+        Debug.Assert(IsInBoardRange(position),
             piece.name + ": Position is not within the board's range");
 
         foreach(BoardPiece boardPiece in boardPieces)
@@ -69,27 +94,27 @@ public class GameBoard : MonoBehaviour
 
         piece.position = position;
         piece.raycastCollider.size = boardSize;
+
+        m_boardCells[position.y, position.x].piece = piece;
     }
 
     public BoardPiece GetBoardPieceAt(Vector2Int position)
     {
-        foreach(BoardPiece piece in boardPieces)
-        {
-            if(piece.position == position)
-                return piece;
-        }
-        return null;
+        if(!IsInBoardRange(position))
+            return null;
+
+        return m_boardCells[position.y, position.x].piece;
     }
 
-    public bool InBoardRangeBoardSpace(Vector2Int position)
+    public bool IsPositionOccupied(Vector2Int position)
+    {
+        return GetBoardPieceAt(position) != null;
+    }
+
+    public bool IsInBoardRange(Vector2Int position)
     {
         return position.x >= 0 && position.x <= boardSize.x &&
                position.y >= 0 && position.x <= boardSize.y;
-    }
-
-    public bool InBoardRangeWorldSpace(Vector3 position)
-    {
-        return InBoardRangeBoardSpace(WorldPositionToBoardPosition(this, position));
     }
 
     public static Vector2 BoardPositionToWorldPosition(GameBoard board, Vector2Int position)
@@ -104,7 +129,6 @@ public class GameBoard : MonoBehaviour
     public static Vector2Int WorldPositionToBoardPosition(GameBoard board, Vector2 position)
     {
         Vector2 startingPos = -new Vector3(board.boardSize.x * board.cellSize.x, board.boardSize.y * board.cellSize.y) / 2;
-        Vector2 cellCentreOffset = new Vector3(board.cellSize.x, board.cellSize.y) / 2;
 
         Vector2 boardPosition = position - startingPos;
 
@@ -112,5 +136,14 @@ public class GameBoard : MonoBehaviour
 
 
         return cellOffset;
+    }
+
+    private void SetBoardCellPieceAt(Vector2Int cellPosition, BoardPiece piece)
+    {
+        m_boardCells[piece.position.y, piece.position.x].piece = null;
+
+        piece.position = cellPosition;
+
+        m_boardCells[piece.position.y, piece.position.x].piece = piece;
     }
 }
