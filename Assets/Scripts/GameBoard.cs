@@ -93,7 +93,8 @@ public class GameBoard : MonoBehaviour
         }
 
         piece.position = position;
-        piece.raycastCollider.size = boardSize;
+        piece.raycastCollider.size = cellSize;
+        piece.transform.position = BoardPositionToWorldPosition(this, piece.position);
 
         m_boardCells[position.y, position.x].piece = piece;
     }
@@ -113,8 +114,8 @@ public class GameBoard : MonoBehaviour
 
     public bool IsInBoardRange(Vector2Int position)
     {
-        return position.x >= 0 && position.x <= boardSize.x &&
-               position.y >= 0 && position.x <= boardSize.y;
+        return position.x >= 0 && position.x < boardSize.x &&
+               position.y >= 0 && position.y < boardSize.y;
     }
 
     public static Vector2 BoardPositionToWorldPosition(GameBoard board, Vector2Int position)

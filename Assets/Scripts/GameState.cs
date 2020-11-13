@@ -35,7 +35,7 @@ public class GameState : MonoBehaviour
         {
             if(selectedPiece)
             {
-                if(selectedPiece.position != selectedBoardPosition)
+                if(selectedPiece.position != selectedBoardPosition && selectedPiece.CanMove(selectedPiece, selectedBoardPosition))
                     gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
                 selectedPiece = null;
             }
