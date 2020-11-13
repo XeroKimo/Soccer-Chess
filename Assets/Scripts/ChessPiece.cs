@@ -49,7 +49,7 @@ public class ChessPiece : BoardPiece
     // Update is called once per frame
     void Update()
     {
-        
+
     }
 
     public bool CanMove(GameBoard boardState, Vector2Int position)
@@ -66,8 +66,29 @@ public class ChessPiece : BoardPiece
     {
         Gizmos.color = Color.green;
 
-        if(raycastCollider)
-            Gizmos.DrawWireCube(transform.position, raycastCollider.size);
+        switch(type)
+        {
+        case ChessType.Knight:
+            Gizmos.color = Color.yellow;
+
+            break;
+        case ChessType.Bishop:
+            Gizmos.color = Color.magenta;
+            break;
+        case ChessType.Rook:
+            Gizmos.color = Color.black;
+            break;
+        case ChessType.Queen:
+            Gizmos.color = Color.white;
+            break;
+        case ChessType.King:
+            Gizmos.color = Color.red;
+            break;
+        }
+        if(team == 1)
+            Gizmos.color -= new Color(0, 0, 0, 0.2f);
+
+        Gizmos.DrawCube(transform.position, gizmoSquareSize);
     }
 
     public static bool CanMoveKnight(ChessPiece piece, GameBoard boardState, Vector2Int position)
@@ -142,15 +163,18 @@ public class ChessPiece : BoardPiece
     {
         Vector2Int direction = targetPosition - piece.position;
 
-        Debug.Assert((Mathf.Abs(direction.x) == 1 && Mathf.Abs(direction.y) == 2 )|| 
+        Debug.Assert((Mathf.Abs(direction.x) == 1 && Mathf.Abs(direction.y) == 2) ||
             (Mathf.Abs(direction.y) == 1 && Mathf.Abs(direction.x) == 2),
             "The movement does not follow rules of a knight, this function will not work like you would expect\n," +
             "Please check if the piece can move first before raycasting");
+
         Vector2Int currentPosition = piece.position;
         Vector2Int currentPosition2 = piece.position;
         currentPosition2 += (direction.x == 1) ? new Vector2Int(1, 0) : new Vector2Int(0, 1);
 
-        direction.x -= currentPosition2.x - currentPosition.x;
+        direction -= currentPosition2 - currentPosition;
+        direction.x = Mathf.Clamp(direction.x, -1, 1);
+        direction.y = Mathf.Clamp(direction.y, -1, 1);
 
         BoardPiece checkPieceAt = boardState.GetBoardPieceAt(currentPosition2);
         if(checkPieceAt != null)

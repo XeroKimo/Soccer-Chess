@@ -9,11 +9,19 @@ public class GameState : MonoBehaviour
     public ChessPiece selectedPiece;
     public Camera mainCamera;
 
+    public ChessPiece[] playerOnePieces;
+    public ChessPiece[] playerTwoPieces;
+    public SoccerPiece soccerPiece;
     public int currentPlayerTurn = 0;
 
     private void Awake()
     {
         instance = this;
+    }
+
+    private void Start()
+    {
+        RegisterPieces();
     }
 
     private void Update()
@@ -51,6 +59,7 @@ public class GameState : MonoBehaviour
                     //If the piece is the soccer ball, move the ball
 
                     gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
+                    selectedPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
                 }
                 selectedPiece = null;
             }
@@ -60,6 +69,25 @@ public class GameState : MonoBehaviour
                 selectedPiece = gameBoard.GetBoardPieceAt(selectedBoardPosition) as ChessPiece;
             }
         }
+    }
+
+    void RegisterPieces()
+    {
+        foreach(ChessPiece piece in playerOnePieces)
+        {
+            gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 0);
+        }
+        foreach(ChessPiece piece in playerTwoPieces)
+        {
+            gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 1);
+        }
+
+        gameBoard.RegisterPiece(soccerPiece, GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position), 2);
+    }
+
+    void ResetBoard()
+    {
+
     }
 
     private void OnDrawGizmos()

@@ -26,8 +26,6 @@ public class GameBoard : MonoBehaviour
     public Vector2 cellSize { get => m_cellSize; }
     public List<BoardPiece> boardPieces { get => m_boardPieces; }
 
-    public ChessPiece debugPiece;
-
     private void Awake()
     {
         m_boardCells = new BoardCell[boardSize.y, boardSize.x];
@@ -43,7 +41,6 @@ public class GameBoard : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        RegisterPiece(debugPiece, new Vector2Int(2, 3));
     }
 
     // Update is called once per frame
@@ -80,7 +77,7 @@ public class GameBoard : MonoBehaviour
         return true;
     }
 
-    public void RegisterPiece(BoardPiece piece, Vector2Int position)
+    public void RegisterPiece(BoardPiece piece, Vector2Int position, byte team)
     {
         m_boardPieces.Add(piece);
 
@@ -93,8 +90,10 @@ public class GameBoard : MonoBehaviour
         }
 
         piece.position = position;
-        piece.raycastCollider.size = cellSize;
+        piece.initialPosition = position;
+        piece.gizmoSquareSize = cellSize;
         piece.transform.position = BoardPositionToWorldPosition(this, piece.position);
+        piece.team = team;
 
         m_boardCells[position.y, position.x].piece = piece;
     }
