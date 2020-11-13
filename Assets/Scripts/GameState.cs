@@ -35,8 +35,23 @@ public class GameState : MonoBehaviour
         {
             if(selectedPiece)
             {
-                if(selectedPiece.position != selectedBoardPosition && selectedPiece.CanMove(selectedPiece, selectedBoardPosition))
+                if(selectedPiece.position != selectedBoardPosition && selectedPiece.CanMove(gameBoard, selectedBoardPosition))
+                {
+                    BoardPiece piece = selectedPiece.ProjectMovement(gameBoard, selectedBoardPosition);
+
+                    //ChessPiece chessPiece = piece as ChessPiece;
+                    //if(chessPiece != null)
+                    //{
+                    //    if(chessPiece
+                    //}
+                    //If the piece is a chess piece and it is an enemy
+                    //Check if the selected position == enemy position
+                    //If true, consume the enemy
+                    //If the piece is an ally piece, do not move
+                    //If the piece is the soccer ball, move the ball
+
                     gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
+                }
                 selectedPiece = null;
             }
             else
