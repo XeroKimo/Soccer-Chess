@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
 public class GameBoard : MonoBehaviour
 {
     const int PieceCount = 13;
@@ -17,9 +18,16 @@ public class GameBoard : MonoBehaviour
     public Vector2 cellSize { get => m_cellSize; }
     public List<BoardPiece> boardPieces { get => m_boardPieces; }
 
+    public ChessPiece debugPiece;
+
+    private void Awake()
+    {
+    }
+
     // Start is called before the first frame update
     void Start()
     {
+        RegisterPiece(debugPiece, new Vector2Int(2, 3));
     }
 
     // Update is called once per frame
@@ -28,7 +36,7 @@ public class GameBoard : MonoBehaviour
         
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
 
@@ -39,14 +47,19 @@ public class GameBoard : MonoBehaviour
                 Gizmos.DrawWireCube(BoardPositionToWorldPosition(this, new Vector2Int(x, y)), cellSize);
             }
         }
+
+        Gizmos.color = Color.white;
+        foreach(BoardPiece piece in boardPieces)
+        {
+            Gizmos.DrawCube(BoardPositionToWorldPosition(this, piece.position), cellSize);
+        }
     }
 
     public void RegisterPiece(BoardPiece piece, Vector2Int position)
     {
         m_boardPieces.Add(piece);
 
-        Debug.Assert(position.x >= 0 && position.x <= boardSize.x &&
-            position.y >= 0 && position.x <= boardSize.y,
+        Debug.Assert(InBoardRangeBoardSpace(position),
             piece.name + ": Position is not within the board's range");
 
         foreach(BoardPiece boardPiece in boardPieces)
@@ -58,7 +71,26 @@ public class GameBoard : MonoBehaviour
         piece.raycastCollider.size = boardSize;
     }
 
+    public BoardPiece GetBoardPieceAt(Vector2Int position)
+    {
+        foreach(BoardPiece piece in boardPieces)
+        {
+            if(piece.position == position)
+                return piece;
+        }
+        return null;
+    }
 
+    public bool InBoardRangeBoardSpace(Vector2Int position)
+    {
+        return position.x >= 0 && position.x <= boardSize.x &&
+               position.y >= 0 && position.x <= boardSize.y;
+    }
+
+    public bool InBoardRangeWorldSpace(Vector3 position)
+    {
+        return InBoardRangeBoardSpace(WorldPositionToBoardPosition(this, position));
+    }
 
     public static Vector2 BoardPositionToWorldPosition(GameBoard board, Vector2Int position)
     {
@@ -74,7 +106,7 @@ public class GameBoard : MonoBehaviour
         Vector2 startingPos = -new Vector3(board.boardSize.x * board.cellSize.x, board.boardSize.y * board.cellSize.y) / 2;
         Vector2 cellCentreOffset = new Vector3(board.cellSize.x, board.cellSize.y) / 2;
 
-        Vector2 boardPosition = position - startingPos - cellCentreOffset;
+        Vector2 boardPosition = position - startingPos;
 
         Vector2Int cellOffset = new Vector2Int((int)(boardPosition.x / board.cellSize.x), (int)(boardPosition.y / board.cellSize.y));
 
