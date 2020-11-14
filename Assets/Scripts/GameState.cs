@@ -6,6 +6,7 @@ class PieceMovement
 {
     public BoardPiece piece;
     public Vector2 targetWorldPos;
+    public AudioSource audio;
 
     public Vector3 initialPos;
     public float time;
@@ -15,6 +16,9 @@ class PieceMovement
         this.targetWorldPos = targetWorldPos;
         initialPos = piece.transform.position;
         time = 0;
+        //audio = GetComponent<AudioSource>();
+
+       // audio.Play();
     }
 }
 
