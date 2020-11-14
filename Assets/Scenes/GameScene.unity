@@ -1985,7 +1985,7 @@ MonoBehaviour:
   - {fileID: 797040459}
   - {fileID: 216992670}
   - {fileID: 1891416525}
-  soccerPiece: {fileID: 59939752}
+  soccerBall: {fileID: 59939752}
   currentPlayerTurn: 0
   goalSize: 3
 --- !u!4 &2121700801
