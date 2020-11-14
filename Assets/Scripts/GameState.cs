@@ -6,7 +6,6 @@ class PieceMovement
 {
     public BoardPiece piece;
     public Vector2 targetWorldPos;
-    public AudioSource audio;
 
     public Vector3 initialPos;
     public float time;
@@ -28,6 +27,10 @@ public class GameState : MonoBehaviour
     public GameBoard gameBoard;
     public ChessPiece selectedPiece;
     public Camera mainCamera;
+    public AudioClip Goal;
+    public AudioClip End;
+    public AudioClip[] audioClipWalkingArray;
+    public AudioClip[] audioClipKickingArray;
 
     public ChessPiece[] playerOnePieces;
     public ChessPiece[] playerTwoPieces;
@@ -144,6 +147,10 @@ public class GameState : MonoBehaviour
                     selectedPiece = null;
                     if(IsInGoal(selectedBoardPosition))
                     {
+                        if(SoundManager.Instance)
+                        {
+                            SoundManager.Instance.Play(Goal);
+                        }
                         HandleGoal();
                     }
                     else
@@ -153,8 +160,12 @@ public class GameState : MonoBehaviour
                 }
                 else
                 {
+                    if (SoundManager.Instance)
+                    {
+                        SoundManager.Instance.RandomSoundEffect(audioClipKickingArray);
+                    }
                     selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                    soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
+                    soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, collidedPieces[0].position);
                     selectedPiece = collidedPieces[0] as ChessPiece;
                     selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
                     selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
@@ -322,7 +333,10 @@ public class GameState : MonoBehaviour
 
     void MovePieceWorldPos(ChessPiece piece, Vector2Int selectedBoardPosition)
     {
-
+        if (SoundManager.Instance)
+        {
+            SoundManager.Instance.RandomSoundEffect(audioClipWalkingArray);
+        }
         Vector3 newWorldPos = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
         newWorldPos.z = -newWorldPos.y;
         selectedPiece.transform.position = newWorldPos;

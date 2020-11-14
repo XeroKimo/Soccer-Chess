@@ -424,16 +424,17 @@ AudioSource:
   m_GameObject: {fileID: 2141649886}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -8737414527614586437, guid: 0f9e0cc0615bee74ba6d70c21365a022,
+    type: 2}
   m_audioClip: {fileID: 8300000, guid: 58415b9f72813dd41a205c36e0cee079, type: 3}
   m_PlayOnAwake: 0
-  m_Volume: 0.022
+  m_Volume: 1
   m_Pitch: 1
   Loop: 0
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 128
+  Priority: 158
   DopplerLevel: 1
   MinDistance: 1
   MaxDistance: 500
@@ -520,7 +521,8 @@ AudioSource:
   m_GameObject: {fileID: 2141649886}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 4290309444016948674, guid: 0f9e0cc0615bee74ba6d70c21365a022,
+    type: 2}
   m_audioClip: {fileID: 8300000, guid: 88bd95376decf9c48ba1f1fb5f22da63, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 0.277
@@ -619,7 +621,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c9e74eb61532b64aa9bfbd77f784e8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  EffectsSource: {fileID: 2141649888}
+  EffectsSource: {fileID: 2141649887}
   MusicSource: {fileID: 2141649888}
   LowPitchRange: 0.95
   HighPitchRange: 1.05
