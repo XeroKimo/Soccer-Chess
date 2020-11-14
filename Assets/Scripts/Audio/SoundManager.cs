@@ -1,9 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Audio;
 
 public class SoundManager : MonoBehaviour
 {
+	public AudioMixer masterMixer;
 	// Audio players components.
 	public AudioSource EffectsSource;
 	public AudioSource MusicSource;
@@ -58,4 +60,11 @@ public class SoundManager : MonoBehaviour
 		EffectsSource.Play();
 	}
 
+	public void SetSound(float soundLevel)
+	{
+		Debug.Log(soundLevel);
+		//EffectsSource.volume = soundLevel;
+		//MusicSource.volume = soundLevel;
+		masterMixer.SetFloat("sfxVol", soundLevel);
+	}
 }
