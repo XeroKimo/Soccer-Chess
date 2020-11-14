@@ -11,7 +11,10 @@ public class BoardPiece : MonoBehaviour
     public byte team;
     public Vector2 gizmoSquareSize;
 
+    public SpriteRenderer spriteRenderer { get; private set; }
+
     private void Awake()
     {
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
     }
 }

@@ -38,7 +38,18 @@ public class GameState : MonoBehaviour
 
     public int goalSize = 3;
 
+    public int playerOneScore { get; private set; }
+    public int playerTwoScore { get; private set; }
 
+
+    const float outlineWidth = 0.03f;
+    Color overlap = Color.white;
+    Color select = Color.red;
+    Color ballPossession = Color.blue;
+
+
+    //The overlapped piece of the mouse's position
+    ChessPiece m_overlappedPiece;
     //List<PieceMovement> pieceMovements = new List<PieceMovement>(2);
 
     private void Awake()
@@ -53,6 +64,8 @@ public class GameState : MonoBehaviour
 
     private void Update()
     {
+        TrackMouse();
+
         if(Input.GetMouseButtonDown(0))
             RaycastBoardTarget();
         if(Input.GetKeyDown(KeyCode.R))
@@ -63,24 +76,47 @@ public class GameState : MonoBehaviour
 
     private void FixedUpdate()
     {
-        //List<PieceMovement> thingsToUpdate = new List<PieceMovement>(pieceMovements);
-        //foreach(PieceMovement movement in thingsToUpdate)
-        //{
-        //    movement.piece.gameObject.transform.position = Vector3.Lerp(movement.initialPos, movement.targetWorldPos, movement.time);
+    }
 
-        //    if(movement.time >= 1)
-        //    {
-        //        gameBoard.MovePiece(movement.piece, GameBoard.WorldPositionToBoardPosition(gameBoard, movement.targetWorldPos));
-        //        pieceMovements.Remove(movement);
+    Vector2Int RaycastToBoard()
+    {
+        Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
-        //        if(pieceMovements.Count == 0)
-        //        {
-        //            currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-        //        }
-        //    }
+        //Convert the world space mouse position to a board position
+        return GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos);
+    }
 
-        //    movement.time += Time.deltaTime;
-        //}
+    void TrackMouse()
+    {
+        ChessPiece piece = gameBoard.GetBoardPieceAt(RaycastToBoard()) as ChessPiece;
+
+        if(piece)
+        {
+            if(piece.team != currentPlayerTurn)
+                return;
+            if(m_overlappedPiece == null && piece != selectedPiece)
+            {
+                m_overlappedPiece = piece;
+                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
+                m_overlappedPiece.spriteRenderer.material.SetColor("_OutlineColor", overlap);
+            }
+            else if(piece != selectedPiece)
+            {
+                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+
+                m_overlappedPiece = piece;
+                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
+                m_overlappedPiece.spriteRenderer.material.SetColor("_OutlineColor", overlap);
+
+            }
+        }
+        else
+        {
+            if(m_overlappedPiece)
+            {
+                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+            }
+        }
 
     }
 
@@ -95,59 +131,70 @@ public class GameState : MonoBehaviour
         Vector2Int selectedBoardPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos);
 
         //If the selected board position is not in range, set the selected piece to null and do nothing,
-
-        if(!gameBoard.IsInBoardRange(selectedBoardPosition))
+        if(isBallPossessed)
         {
+            if(selectedPiece.CanMove(gameBoard, selectedBoardPosition) && ValidBallPosition(selectedBoardPosition))
+            {
+                List<BoardPiece> collidedPieces = selectedPiece.ProjectMovement(gameBoard, selectedBoardPosition);
+                if(collidedPieces.Count == 0)
+                {
+                    isBallPossessed = false;
+                    soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
+                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                    selectedPiece = null;
+                    if(IsInGoal(selectedBoardPosition))
+                    {
+                        HandleGoal();
+                    }
+                    else
+                    {
+                        currentPlayerTurn = (currentPlayerTurn + 1) % 2;
+                    }
+                }
+                else
+                {
+                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                    soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
+                    selectedPiece = collidedPieces[0] as ChessPiece;
+                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
+                    selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
+                    //if(collidedPieces[0].team != selectedPiece.team)
+                    //{
+                    //    gameBoard.RemovePiece(collidedPieces[0]);
+                    //    gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
+
+                    //    selectedPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
+                    //    currentPlayerTurn = (currentPlayerTurn + 1) % 2;
+                    //}
+                }
+            }
+        }
+        else if(!gameBoard.IsInBoardRange(selectedBoardPosition))
+        {
+            if(selectedPiece)
+            {
+                selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+            }
             selectedPiece = null;
         }
         else
         {
-            if(!selectedPiece)
+            if(m_overlappedPiece)
             {
-                selectedPiece = gameBoard.GetBoardPieceAt(selectedBoardPosition) as ChessPiece;
                 if(selectedPiece)
                 {
-                    selectedPiece = (selectedPiece.team == currentPlayerTurn) ? selectedPiece : null;
+                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
                 }
+
+                selectedPiece = m_overlappedPiece;
+                selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
+                selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", select);
+                m_overlappedPiece = null;
             }
             //If we've selected a piece, the next input will determine what action will take,
-            else
+            else if(selectedPiece)
             {
-                if(isBallPossessed)
-                {
-                    if(selectedPiece.CanMove(gameBoard, selectedBoardPosition) && ValidBallPosition(selectedBoardPosition))
-                    {
-                        List<BoardPiece> collidedPieces = selectedPiece.ProjectMovement(gameBoard, selectedBoardPosition);
-                        if(collidedPieces.Count == 0)
-                        {
-                            isBallPossessed = false;
-                            soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-                            selectedPiece = null;
-                            if(IsInGoal(selectedBoardPosition))
-                            {
-                                HandleGoal();
-                            }
-                            else
-                            {
-                                currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-                            }
-                        }
-                        else
-                        {
-                            soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-                            selectedPiece = collidedPieces[0] as ChessPiece;
-                            //if(collidedPieces[0].team != selectedPiece.team)
-                            //{
-                            //    gameBoard.RemovePiece(collidedPieces[0]);
-                            //    gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
-
-                            //    selectedPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-                            //    currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-                            //}
-                        }
-                    }
-                }
-                else if(ValidPlayerPosition(selectedBoardPosition))
+                if(ValidPlayerPosition(selectedBoardPosition))
                 {
                     //if the move is invalid, or have selected our current position, do nothing and deselect our selected piece
                     if(selectedPiece.position != selectedBoardPosition && selectedPiece.CanMove(gameBoard, selectedBoardPosition))
@@ -162,6 +209,7 @@ public class GameState : MonoBehaviour
                             if(selectedPiece.position == GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position))
                             {
                                 isBallPossessed = true;
+                                selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
                             }
                             if(!isBallPossessed)
                                 currentPlayerTurn = (currentPlayerTurn + 1) % 2;
@@ -178,7 +226,11 @@ public class GameState : MonoBehaviour
                     }
                 }
                 if(!isBallPossessed)
+                {
+                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
                     selectedPiece = null;
+
+                }
             }
         }
     }
@@ -210,7 +262,6 @@ public class GameState : MonoBehaviour
             gameBoard.RemovePiece(piece);
         }
 
-        gameBoard.RemovePiece(soccerPiece);
 
         foreach(ChessPiece piece in playerOnePieces)
         {
@@ -221,7 +272,7 @@ public class GameState : MonoBehaviour
             gameBoard.PlacePiece(piece, piece.initialPosition);
         }
 
-        gameBoard.PlacePiece(soccerPiece, soccerPiece.initialPosition);
+        soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerPiece.initialPosition);
     }
 
     private void OnDrawGizmos()
@@ -245,7 +296,7 @@ public class GameState : MonoBehaviour
         {
             return IsInGoal(targetPos);
         }
-        return true;
+        return ValidPlayerPosition(targetPos);
 
     }
 
@@ -253,12 +304,20 @@ public class GameState : MonoBehaviour
     {
         int startingGoalHeight = gameBoard.boardSize.y / 2 - goalSize / 2;
 
-        return targetPos.y >= startingGoalHeight && targetPos.y < startingGoalHeight + goalSize;
+        return targetPos.y >= startingGoalHeight && targetPos.y < startingGoalHeight + goalSize && (targetPos.x == 0 || targetPos.x == gameBoard.boardSize.x - 1);
     }
 
     void HandleGoal()
     {
         ResetBoard();
+        if(currentPlayerTurn == 0)
+        {
+            playerOneScore++;
+        }
+        else
+        {
+            playerTwoScore++;
+        }
     }
 
     void MovePieceWorldPos(ChessPiece piece, Vector2Int selectedBoardPosition)
