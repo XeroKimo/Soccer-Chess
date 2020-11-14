@@ -17,7 +17,7 @@ public class GameState : MonoBehaviour
 
     public ChessPiece[] playerOnePieces;
     public ChessPiece[] playerTwoPieces;
-    public SoccerPiece soccerPiece;
+    public SoccerPiece soccerBall;
     public int currentPlayerTurn = 0;
 
     public int goalSize = 3;
@@ -71,8 +71,8 @@ public class GameState : MonoBehaviour
         }
 
         //gameBoard.RegisterPiece(soccerPiece, GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position), 2);
-        soccerPiece.initialPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position);
-        soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerPiece.initialPosition);
+        soccerBall.initialPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, soccerBall.transform.position);
+        soccerBall.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition);
     }
 
     void ResetBoard()
@@ -96,7 +96,7 @@ public class GameState : MonoBehaviour
             gameBoard.PlacePiece(piece, piece.initialPosition);
         }
 
-        soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerPiece.initialPosition);
+        soccerBall.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition);
     }
 
     private void OnDrawGizmos()
@@ -282,10 +282,26 @@ class PlayerMoveState : GameSubState
     Vector2Int m_targetBoardPos;
 
     Vector2 m_targetWorldPos;
+
+    float time = 0;
+
+    float timeStretch;
+    Vector3 startingPos;
+
+    const float movementSpeed = 3;
     public PlayerMoveState(ChessPiece possessingPiece, Vector2Int targetBoardPos)
     {
         m_possessingPiece = possessingPiece;
         m_targetBoardPos = targetBoardPos;
+
+        Vector2Int posDiff = targetBoardPos - m_possessingPiece.position;
+
+        if(Mathf.Abs(posDiff.x) > Mathf.Abs(posDiff.y))
+            timeStretch = Mathf.Abs(posDiff.x);
+        else
+            timeStretch = Mathf.Abs(posDiff.y);
+
+        startingPos = m_possessingPiece.transform.position; 
 
         m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
     }
@@ -297,7 +313,10 @@ class PlayerMoveState : GameSubState
 
     void MoveUnit()
     {
-        m_possessingPiece.transform.position = m_targetWorldPos;
+        time += Time.deltaTime / timeStretch * movementSpeed;
+
+        m_possessingPiece.transform.position = Vector3.Lerp(startingPos, m_targetWorldPos, time);
+
         if(SoundManager.Instance)
         {
             SoundManager.Instance.RandomSoundEffect(gameState.audioClipWalkingArray);
@@ -310,7 +329,7 @@ class PlayerMoveState : GameSubState
 
     void HandleMoveEnd()
     {
-        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerPiece.transform.position);
+        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
         ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(m_targetBoardPos) as ChessPiece;
 
         if(ballBoardPos == m_targetBoardPos)
@@ -363,7 +382,7 @@ class BallMoveInputState : GameSubState
             if(collidedPieces.Count == 0)
             {
                 m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                gameState.currentSubState = new BallMoveState(selectedBoardPosition);
+                gameState.currentSubState = new BallMoveState(m_possessingPiece, selectedBoardPosition);
 
                 if(SoundManager.Instance)
                 {
@@ -373,7 +392,7 @@ class BallMoveInputState : GameSubState
             else
             {
                 m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                gameState.currentSubState = new BallMoveState(selectedBoardPosition);
+                gameState.currentSubState = new BallMoveState(m_possessingPiece, selectedBoardPosition);
 
                 if(SoundManager.Instance)
                 {
@@ -386,14 +405,20 @@ class BallMoveInputState : GameSubState
 
 class BallMoveState : GameSubState
 {
+    ChessPiece m_originalKicker;
     Vector2Int m_targetBoardPos;
 
     Vector2 m_targetWorldPos;
-    public BallMoveState(Vector2Int targetBoardPos)
+    float time = 0;
+    Vector3 startingPos;
+
+    public BallMoveState(ChessPiece kicker, Vector2Int targetBoardPos)
     {
+        m_originalKicker = kicker;
         m_targetBoardPos = targetBoardPos;
 
         m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
+        startingPos = gameState.soccerBall.transform.position;
     }
 
     public override void Update()
@@ -403,8 +428,23 @@ class BallMoveState : GameSubState
 
     void MoveBall()
     {
-        gameState.soccerPiece.transform.position = m_targetWorldPos;
-        if((Vector2)gameState.soccerPiece.transform.position == m_targetWorldPos)
+        time += Time.deltaTime;
+
+        gameState.soccerBall.transform.position = Vector3.Lerp(startingPos, m_targetWorldPos, time);
+
+        Vector2Int currentBallPos = GameBoard.WorldPositionToBoardPosition(GameState.instance.gameBoard, gameState.soccerBall.transform.position);
+        ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(currentBallPos) as ChessPiece;
+
+        if(chessPiece)
+        {
+            if(chessPiece != m_originalKicker)
+            {
+                gameState.currentSubState = new BallMoveInputState(chessPiece);
+                gameState.soccerBall.transform.position = chessPiece.transform.position;
+            }
+        }
+
+        if((Vector2)gameState.soccerBall.transform.position == m_targetWorldPos)
         {
             HandleMoveEnd();
         }
