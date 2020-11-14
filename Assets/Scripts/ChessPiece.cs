@@ -14,7 +14,7 @@ public enum ChessType
 public class ChessPiece : BoardPiece
 {
     public delegate bool MoveRestriction(ChessPiece piece, GameBoard boardState, Vector2Int position);
-    public delegate BoardPiece RaycastMovement(ChessPiece piece, GameBoard boardState, Vector2Int targetPosition);
+    public delegate List<BoardPiece> RaycastMovement(ChessPiece piece, GameBoard boardState, Vector2Int targetPosition);
 
     public ChessType type;
 
@@ -57,13 +57,15 @@ public class ChessPiece : BoardPiece
         return CanMoveDelegate(this, boardState, position);
     }
 
-    public BoardPiece ProjectMovement(GameBoard boardState, Vector2Int position)
+    public List<BoardPiece> ProjectMovement(GameBoard boardState, Vector2Int position)
     {
         return RaycastMovementDelegate(this, boardState, position);
     }
 
     private void OnDrawGizmos()
     {
+        if(!enabled)
+            return;
         Gizmos.color = Color.green;
 
         switch(type)
@@ -134,7 +136,7 @@ public class ChessPiece : BoardPiece
         return positionDiff.x < 2 && positionDiff.y < 2; //&& CanMoveQueen(piece, boardState, position);
     }
 
-    public static BoardPiece LinearRaycast(ChessPiece piece, GameBoard boardState, Vector2Int targetPosition)
+    public static List<BoardPiece> LinearRaycast(ChessPiece piece, GameBoard boardState, Vector2Int targetPosition)
     {
         Vector2Int direction = targetPosition - piece.position;
 
@@ -143,23 +145,26 @@ public class ChessPiece : BoardPiece
 
         Vector2Int currentPos = piece.position;
 
+        List<BoardPiece> collidedPieces = new List<BoardPiece>(5);
         do
         {
             currentPos += direction;
 
             BoardPiece checkPieceAt = boardState.GetBoardPieceAt(currentPos);
             if(checkPieceAt != null)
-                return checkPieceAt;
+            {
+                collidedPieces.Add(checkPieceAt);
+            }
 
         } while(currentPos != targetPosition);
 
 
 
-        return null;
+        return collidedPieces;
     }
 
 
-    public static BoardPiece KnightRaycast(ChessPiece piece, GameBoard boardState, Vector2Int targetPosition)
+    public static List<BoardPiece> KnightRaycast(ChessPiece piece, GameBoard boardState, Vector2Int targetPosition)
     {
         Vector2Int direction = targetPosition - piece.position;
 
@@ -170,15 +175,18 @@ public class ChessPiece : BoardPiece
 
         Vector2Int currentPosition = piece.position;
         Vector2Int currentPosition2 = piece.position;
-        currentPosition2 += (direction.x == 1) ? new Vector2Int(1, 0) : new Vector2Int(0, 1);
+        currentPosition2 += (direction.x == 1) ? new Vector2Int(Mathf.Clamp(direction.x, -1, 1), 0) : new Vector2Int(0, Mathf.Clamp(direction.y, -1, 1));
 
         direction -= currentPosition2 - currentPosition;
         direction.x = Mathf.Clamp(direction.x, -1, 1);
         direction.y = Mathf.Clamp(direction.y, -1, 1);
 
+        List<BoardPiece> collidedPieces = new List<BoardPiece>(5);
+
         BoardPiece checkPieceAt = boardState.GetBoardPieceAt(currentPosition2);
+
         if(checkPieceAt != null)
-            return checkPieceAt;
+            collidedPieces.Add(checkPieceAt);
         do
         {
             currentPosition += direction;
@@ -186,14 +194,22 @@ public class ChessPiece : BoardPiece
 
             checkPieceAt = boardState.GetBoardPieceAt(currentPosition);
             if(checkPieceAt != null)
-                return checkPieceAt;
+                collidedPieces.Add(checkPieceAt);
 
             checkPieceAt = boardState.GetBoardPieceAt(currentPosition2);
             if(checkPieceAt != null)
-                return checkPieceAt;
+                collidedPieces.Add(checkPieceAt);
+
+            if(!boardState.IsInBoardRange(currentPosition) || !boardState.IsInBoardRange(currentPosition2))
+            {
+                Debug.Log("CurrentPos: " + currentPosition + "\nCurrentPos2: " +  
+                    currentPosition2 + "\nDirection: " + direction+
+                    "\n OriginalPos: " + piece.position + "\nTargetPos: " + targetPosition);
+                break;
+            }
 
         } while(currentPosition2 != targetPosition);
 
-        return null;
+        return collidedPieces;
     }
 }

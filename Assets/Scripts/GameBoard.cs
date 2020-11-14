@@ -62,10 +62,6 @@ public class GameBoard : MonoBehaviour
         }
 
         Gizmos.color = Color.white;
-        foreach(BoardPiece piece in boardPieces)
-        {
-            Gizmos.DrawCube(BoardPositionToWorldPosition(this, piece.position), cellSize);
-        }
     }
 
     public bool MovePiece(BoardPiece piece, Vector2Int newPosition)
@@ -73,7 +69,11 @@ public class GameBoard : MonoBehaviour
         if(IsPositionOccupied(newPosition))
             return false;
 
-        SetBoardCellPieceAt(newPosition, piece);
+        m_boardCells[piece.position.y, piece.position.x].piece = null;
+
+        piece.position = newPosition;
+
+        m_boardCells[piece.position.y, piece.position.x].piece = piece;
         return true;
     }
 
@@ -96,6 +96,21 @@ public class GameBoard : MonoBehaviour
         piece.team = team;
 
         m_boardCells[position.y, position.x].piece = piece;
+    }
+
+    public void PlacePiece(BoardPiece piece, Vector2Int position)
+    {
+        Debug.Assert(!IsPositionOccupied(position));
+
+        piece.position = position;
+        m_boardCells[position.y, position.x].piece = piece;
+        piece.enabled = true;
+    }
+
+    public void RemovePiece(BoardPiece piece)
+    {
+        piece.enabled = false;
+        m_boardCells[piece.position.y, piece.position.x].piece = null;
     }
 
     public BoardPiece GetBoardPieceAt(Vector2Int position)
@@ -138,12 +153,4 @@ public class GameBoard : MonoBehaviour
         return cellOffset;
     }
 
-    private void SetBoardCellPieceAt(Vector2Int cellPosition, BoardPiece piece)
-    {
-        m_boardCells[piece.position.y, piece.position.x].piece = null;
-
-        piece.position = cellPosition;
-
-        m_boardCells[piece.position.y, piece.position.x].piece = piece;
-    }
 }
