@@ -18,7 +18,7 @@ class PieceMovement
         time = 0;
         //audio = GetComponent<AudioSource>();
 
-       // audio.Play();
+        // audio.Play();
     }
 }
 
@@ -81,7 +81,7 @@ public class GameState : MonoBehaviour
 
         //    movement.time += Time.deltaTime;
         //}
-        
+
     }
 
     public void RaycastBoardTarget()
@@ -134,6 +134,7 @@ public class GameState : MonoBehaviour
                         }
                         else
                         {
+                            soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
                             selectedPiece = collidedPieces[0] as ChessPiece;
                             //if(collidedPieces[0].team != selectedPiece.team)
                             //{
@@ -157,8 +158,7 @@ public class GameState : MonoBehaviour
                         {
                             gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
 
-                            selectedPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-
+                            MovePieceWorldPos(selectedPiece, selectedBoardPosition);
                             if(selectedPiece.position == GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position))
                             {
                                 isBallPossessed = true;
@@ -166,16 +166,14 @@ public class GameState : MonoBehaviour
                             if(!isBallPossessed)
                                 currentPlayerTurn = (currentPlayerTurn + 1) % 2;
                         }
-                        else
+                        else if(collidedPieces[0].team != selectedPiece.team)
                         {
-                            if(collidedPieces[0].team != selectedPiece.team)
-                            {
-                                gameBoard.RemovePiece(collidedPieces[0]);
-                                gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
 
-                                selectedPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-                                currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-                            }
+                            gameBoard.RemovePiece(collidedPieces[0]);
+                            gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
+
+                            MovePieceWorldPos(selectedPiece, selectedBoardPosition);
+                            currentPlayerTurn = (currentPlayerTurn + 1) % 2;
                         }
                     }
                 }
@@ -261,5 +259,13 @@ public class GameState : MonoBehaviour
     void HandleGoal()
     {
         ResetBoard();
+    }
+
+    void MovePieceWorldPos(ChessPiece piece, Vector2Int selectedBoardPosition)
+    {
+
+        Vector3 newWorldPos = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
+        newWorldPos.z = -newWorldPos.y;
+        selectedPiece.transform.position = newWorldPos;
     }
 }
