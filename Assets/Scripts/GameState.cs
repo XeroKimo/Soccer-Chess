@@ -2,28 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-class PieceMovement
-{
-    public BoardPiece piece;
-    public Vector2 targetWorldPos;
-
-    public Vector3 initialPos;
-    public float time;
-    public PieceMovement(BoardPiece piece, Vector2 targetWorldPos)
-    {
-        this.piece = piece;
-        this.targetWorldPos = targetWorldPos;
-        initialPos = piece.transform.position;
-        time = 0;
-        //audio = GetComponent<AudioSource>();
-
-        // audio.Play();
-    }
-}
-
 public class GameState : MonoBehaviour
 {
     public static GameState instance { get; private set; }
+    public GameSubState currentSubState;
+
     public GameBoard gameBoard;
     public ChessPiece selectedPiece;
     public Camera mainCamera;
@@ -37,23 +20,10 @@ public class GameState : MonoBehaviour
     public SoccerPiece soccerPiece;
     public int currentPlayerTurn = 0;
 
-    bool isBallPossessed;
-
     public int goalSize = 3;
 
     public int playerOneScore { get; private set; }
     public int playerTwoScore { get; private set; }
-
-
-    const float outlineWidth = 0.03f;
-    Color overlap = Color.white;
-    Color select = Color.red;
-    Color ballPossession = Color.blue;
-
-
-    //The overlapped piece of the mouse's position
-    ChessPiece m_overlappedPiece;
-    //List<PieceMovement> pieceMovements = new List<PieceMovement>(2);
 
     private void Awake()
     {
@@ -63,187 +33,30 @@ public class GameState : MonoBehaviour
     private void Start()
     {
         RegisterPieces();
+        currentPlayerTurn = 1;
+        currentSubState = new ReturnPiecesState();
     }
 
     private void Update()
     {
-        TrackMouse();
+        //TrackMouse();
 
-        if(Input.GetMouseButtonDown(0))
-            RaycastBoardTarget();
-        if(Input.GetKeyDown(KeyCode.R))
-        {
-            ResetBoard();
-        }
+        currentSubState.Update();
+
+        //if(Input.GetMouseButtonDown(0))
+        //    RaycastBoardTarget();
+        //if(Input.GetKeyDown(KeyCode.R))
+        //{
+        //    ResetBoard();
+        //}
     }
 
-    private void FixedUpdate()
-    {
-    }
-
-    Vector2Int RaycastToBoard()
+    public Vector2Int RaycastToBoardPosition()
     {
         Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
         //Convert the world space mouse position to a board position
         return GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos);
-    }
-
-    void TrackMouse()
-    {
-        ChessPiece piece = gameBoard.GetBoardPieceAt(RaycastToBoard()) as ChessPiece;
-
-        if(piece)
-        {
-            if(piece.team != currentPlayerTurn)
-                return;
-            if(m_overlappedPiece == null && piece != selectedPiece)
-            {
-                m_overlappedPiece = piece;
-                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
-                m_overlappedPiece.spriteRenderer.material.SetColor("_OutlineColor", overlap);
-            }
-            else if(piece != selectedPiece)
-            {
-                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-
-                m_overlappedPiece = piece;
-                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
-                m_overlappedPiece.spriteRenderer.material.SetColor("_OutlineColor", overlap);
-
-            }
-        }
-        else
-        {
-            if(m_overlappedPiece)
-            {
-                m_overlappedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-            }
-        }
-
-    }
-
-    public void RaycastBoardTarget()
-    {
-        //if(pieceMovements.Count > 0)
-        //    return;
-        //Convert our mouse position into world space
-        Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-
-        //Convert the world space mouse position to a board position
-        Vector2Int selectedBoardPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos);
-
-        //If the selected board position is not in range, set the selected piece to null and do nothing,
-        if(isBallPossessed)
-        {
-            if(selectedPiece.CanMove(gameBoard, selectedBoardPosition) && ValidBallPosition(selectedBoardPosition))
-            {
-                List<BoardPiece> collidedPieces = selectedPiece.ProjectMovement(gameBoard, selectedBoardPosition);
-                if(collidedPieces.Count == 0)
-                {
-                    isBallPossessed = false;
-                    soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                    selectedPiece = null;
-                    if(IsInGoal(selectedBoardPosition))
-                    {
-                        if(SoundManager.Instance)
-                        {
-                            SoundManager.Instance.Play(Goal);
-                        }
-                        HandleGoal();
-                    }
-                    else
-                    {
-                        currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-                    }
-                }
-                else
-                {
-                    if (SoundManager.Instance)
-                    {
-                        SoundManager.Instance.RandomSoundEffect(audioClipKickingArray);
-                    }
-                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                    soccerPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, collidedPieces[0].position);
-                    selectedPiece = collidedPieces[0] as ChessPiece;
-                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
-                    selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
-                    //if(collidedPieces[0].team != selectedPiece.team)
-                    //{
-                    //    gameBoard.RemovePiece(collidedPieces[0]);
-                    //    gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
-
-                    //    selectedPiece.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-                    //    currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-                    //}
-                }
-            }
-        }
-        else if(!gameBoard.IsInBoardRange(selectedBoardPosition))
-        {
-            if(selectedPiece)
-            {
-                selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-            }
-            selectedPiece = null;
-        }
-        else
-        {
-            if(m_overlappedPiece)
-            {
-                if(selectedPiece)
-                {
-                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                }
-
-                selectedPiece = m_overlappedPiece;
-                selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
-                selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", select);
-                m_overlappedPiece = null;
-            }
-            //If we've selected a piece, the next input will determine what action will take,
-            else if(selectedPiece)
-            {
-                if(ValidPlayerPosition(selectedBoardPosition))
-                {
-                    //if the move is invalid, or have selected our current position, do nothing and deselect our selected piece
-                    if(selectedPiece.position != selectedBoardPosition && selectedPiece.CanMove(gameBoard, selectedBoardPosition))
-                    {
-                        List<BoardPiece> collidedPieces = selectedPiece.ProjectMovement(gameBoard, selectedBoardPosition);
-
-                        if(collidedPieces.Count == 0)
-                        {
-                            gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
-
-                            MovePieceWorldPos(selectedPiece, selectedBoardPosition);
-                            if(selectedPiece.position == GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position))
-                            {
-                                isBallPossessed = true;
-                                selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
-                            }
-                            if(!isBallPossessed)
-                                currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-                        }
-                        else if(collidedPieces[0].team != selectedPiece.team)
-                        {
-
-                            gameBoard.RemovePiece(collidedPieces[0]);
-                            gameBoard.MovePiece(selectedPiece, selectedBoardPosition);
-
-                            MovePieceWorldPos(selectedPiece, selectedBoardPosition);
-                            currentPlayerTurn = (currentPlayerTurn + 1) % 2;
-                        }
-                    }
-                }
-                if(!isBallPossessed)
-                {
-                    selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                    selectedPiece = null;
-
-                }
-            }
-        }
     }
 
     void RegisterPieces()
@@ -294,13 +107,13 @@ public class GameState : MonoBehaviour
             Gizmos.DrawCube(GameBoard.BoardPositionToWorldPosition(gameBoard, selectedPiece.position), gameBoard.cellSize);
     }
 
-    bool ValidPlayerPosition(Vector2Int targetPos)
+    public bool ValidPlayerPosition(Vector2Int targetPos)
     {
         return (targetPos.x > 0 && targetPos.x < gameBoard.boardSize.x - 1) &&
          (targetPos.y >= 0 && targetPos.y < gameBoard.boardSize.y);
     }
 
-    bool ValidBallPosition(Vector2Int targetPos)
+    public bool ValidBallPosition(Vector2Int targetPos)
     {
         if((targetPos.x == 0 || targetPos.x == gameBoard.boardSize.x - 1) &&
          (targetPos.y >= 0 && targetPos.y < gameBoard.boardSize.y))
@@ -311,14 +124,14 @@ public class GameState : MonoBehaviour
 
     }
 
-    bool IsInGoal(Vector2Int targetPos)
+    public bool IsInGoal(Vector2Int targetPos)
     {
         int startingGoalHeight = gameBoard.boardSize.y / 2 - goalSize / 2;
 
         return targetPos.y >= startingGoalHeight && targetPos.y < startingGoalHeight + goalSize && (targetPos.x == 0 || targetPos.x == gameBoard.boardSize.x - 1);
     }
 
-    void HandleGoal()
+    public void HandleGoal()
     {
         ResetBoard();
         if(currentPlayerTurn == 0)
@@ -329,16 +142,310 @@ public class GameState : MonoBehaviour
         {
             playerTwoScore++;
         }
+
+        currentSubState = new ReturnPiecesState();
     }
 
-    void MovePieceWorldPos(ChessPiece piece, Vector2Int selectedBoardPosition)
+}
+
+public abstract class GameSubState
+{
+    protected GameState gameState { get; private set; }
+    public GameSubState()
     {
-        if (SoundManager.Instance)
+        gameState = GameState.instance;
+    }
+    public abstract void Update();
+}
+
+class PlayerMoveInputState : GameSubState
+{
+
+    const float outlineWidth = 0.03f;
+    Color overlap = Color.white;
+    Color select = Color.red;
+
+    ChessPiece m_overlappedPiece;
+    ChessPiece m_selectedPiece;
+
+
+    public override void Update()
+    {
+        TrackMouse();
+        if(Input.GetMouseButtonDown(0))
+            HandleClick();
+    }
+
+
+    void TrackMouse()
+    {
+        ChessPiece piece = gameState.gameBoard.GetBoardPieceAt(gameState.RaycastToBoardPosition()) as ChessPiece;
+
+        if(piece)
         {
-            SoundManager.Instance.RandomSoundEffect(audioClipWalkingArray);
+            if(piece.team != gameState.currentPlayerTurn)
+                return;
+
+            if(m_overlappedPiece == null && piece != m_selectedPiece)
+            {
+                m_overlappedPiece = piece;
+                ShowOutline(m_overlappedPiece, overlap);
+            }
+            else if(piece != m_selectedPiece)
+            {
+                HideOutline(m_overlappedPiece);
+
+                m_overlappedPiece = piece;
+                ShowOutline(m_overlappedPiece, overlap);
+            }
+            else
+            {
+                if(m_overlappedPiece)
+                {
+                    HideOutline(m_overlappedPiece);
+                    m_overlappedPiece = null;
+                }
+            }
         }
-        Vector3 newWorldPos = GameBoard.BoardPositionToWorldPosition(gameBoard, selectedBoardPosition);
-        newWorldPos.z = -newWorldPos.y;
-        selectedPiece.transform.position = newWorldPos;
+        else
+        {
+            if(m_overlappedPiece)
+            {
+                HideOutline(m_overlappedPiece);
+                m_overlappedPiece = null;
+            }
+        }
+    }
+
+    void HandleClick()
+    {
+        if(m_overlappedPiece)
+        {
+            if(m_selectedPiece)
+                HideOutline(m_selectedPiece);
+
+            m_selectedPiece = m_overlappedPiece;
+            ShowOutline(m_selectedPiece, select);
+            m_overlappedPiece = null;
+        }
+        else if(m_selectedPiece)
+        {
+            Vector2Int selectedBoardPosition = gameState.RaycastToBoardPosition();
+            if(gameState.ValidPlayerPosition(selectedBoardPosition))
+            {
+                //if the move is invalid, or have selected our current position, do nothing and deselect our selected piece
+                if(m_selectedPiece.position != selectedBoardPosition && m_selectedPiece.CanMove(gameState.gameBoard, selectedBoardPosition))
+                {
+                    List<BoardPiece> collidedPieces = m_selectedPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
+
+                    if(collidedPieces.Count == 0)
+                    {
+                        gameState.currentSubState = new PlayerMoveState(m_selectedPiece, selectedBoardPosition);
+                        HideOutline(m_selectedPiece);
+                    }
+                    else if(collidedPieces[0].team != m_selectedPiece.team && collidedPieces[0].position == selectedBoardPosition)
+                    {
+                        gameState.currentSubState = new PlayerMoveState(m_selectedPiece, selectedBoardPosition);
+                        HideOutline(m_selectedPiece);
+                    }
+                }
+                else
+                {
+                    HideOutline(m_selectedPiece);
+                    m_selectedPiece = null;
+                }
+            }
+            else
+            {
+                HideOutline(m_selectedPiece);
+                m_selectedPiece = null;
+            }
+        }
+    }
+
+    void HideOutline(ChessPiece piece)
+    {
+        piece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+    }
+
+    void ShowOutline(ChessPiece piece, Color color)
+    {
+        piece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
+        piece.spriteRenderer.material.SetColor("_OutlineColor", color);
+    }
+}
+
+
+class PlayerMoveState : GameSubState
+{
+    ChessPiece m_possessingPiece;
+    Vector2Int m_targetBoardPos;
+
+    Vector2 m_targetWorldPos;
+    public PlayerMoveState(ChessPiece possessingPiece, Vector2Int targetBoardPos)
+    {
+        m_possessingPiece = possessingPiece;
+        m_targetBoardPos = targetBoardPos;
+
+        m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
+    }
+
+    public override void Update()
+    {
+        MoveUnit();
+    }
+
+    void MoveUnit()
+    {
+        m_possessingPiece.transform.position = m_targetWorldPos;
+        if(SoundManager.Instance)
+        {
+            SoundManager.Instance.RandomSoundEffect(gameState.audioClipWalkingArray);
+        }
+        if((Vector2)m_possessingPiece.transform.position == m_targetWorldPos)
+        {
+            HandleMoveEnd();
+        }
+    }
+
+    void HandleMoveEnd()
+    {
+        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerPiece.transform.position);
+        ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(m_targetBoardPos) as ChessPiece;
+
+        if(ballBoardPos == m_targetBoardPos)
+        {
+            gameState.currentSubState = new BallMoveInputState(m_possessingPiece);
+        }
+        else if(chessPiece)
+        {
+            //Add piece to the remove list
+
+            gameState.gameBoard.RemovePiece(chessPiece);
+            gameState.currentSubState = new ReturnPiecesState();
+        }
+        else
+        {
+            gameState.currentSubState = new ReturnPiecesState();
+        }
+
+        gameState.gameBoard.MovePiece(m_possessingPiece, m_targetBoardPos);
+    }
+}
+
+class BallMoveInputState : GameSubState
+{
+    ChessPiece m_possessingPiece;
+    Color ballPossession = Color.blue;
+
+    const float outlineWidth = 0.03f;
+
+    public BallMoveInputState(ChessPiece possessingPiece)
+    {
+        m_possessingPiece = possessingPiece;
+
+        m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
+        m_possessingPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
+    }
+
+    public override void Update()
+    {
+        if(Input.GetMouseButtonDown(0))
+            HandleClick();
+    }
+
+    void HandleClick()
+    {
+        Vector2Int selectedBoardPosition = gameState.RaycastToBoardPosition();
+        if(m_possessingPiece.CanMove(gameState.gameBoard, selectedBoardPosition) && gameState.ValidBallPosition(selectedBoardPosition))
+        {
+            List<BoardPiece> collidedPieces = m_possessingPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
+            if(collidedPieces.Count == 0)
+            {
+                m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                gameState.currentSubState = new BallMoveState(selectedBoardPosition);
+
+                if(SoundManager.Instance)
+                {
+                    SoundManager.Instance.RandomSoundEffect(gameState.audioClipKickingArray);
+                }
+            }
+            else
+            {
+                m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                gameState.currentSubState = new BallMoveState(selectedBoardPosition);
+
+                if(SoundManager.Instance)
+                {
+                    SoundManager.Instance.RandomSoundEffect(gameState.audioClipKickingArray);
+                }
+            }
+        }
+    }
+}
+
+class BallMoveState : GameSubState
+{
+    Vector2Int m_targetBoardPos;
+
+    Vector2 m_targetWorldPos;
+    public BallMoveState(Vector2Int targetBoardPos)
+    {
+        m_targetBoardPos = targetBoardPos;
+
+        m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
+    }
+
+    public override void Update()
+    {
+        MoveBall();
+    }
+
+    void MoveBall()
+    {
+        gameState.soccerPiece.transform.position = m_targetWorldPos;
+        if((Vector2)gameState.soccerPiece.transform.position == m_targetWorldPos)
+        {
+            HandleMoveEnd();
+        }
+    }
+
+    void HandleMoveEnd()
+    {
+        ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(m_targetBoardPos) as ChessPiece;
+
+        if(chessPiece)
+        {
+            gameState.currentSubState = new BallMoveInputState(chessPiece);
+        }
+        else if(gameState.IsInGoal(m_targetBoardPos))
+        {
+            gameState.currentSubState = new HandleGoalState();
+        }
+        else
+        {
+            gameState.currentSubState = new ReturnPiecesState();
+        }
+    }
+}
+
+class HandleGoalState : GameSubState
+{
+    public override void Update()
+    {
+        gameState.HandleGoal();
+    }
+}
+
+class ReturnPiecesState : GameSubState
+{
+    public ReturnPiecesState()
+    {
+        gameState.currentPlayerTurn = (gameState.currentPlayerTurn + 1) % 2;
+    }
+
+    public override void Update()
+    {
+        gameState.currentSubState = new PlayerMoveInputState();
     }
 }
