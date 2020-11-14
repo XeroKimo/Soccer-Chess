@@ -135,7 +135,7 @@ public class GameBoard : MonoBehaviour
 
     public static Vector2 BoardPositionToWorldPosition(GameBoard board, Vector2Int position)
     {
-        Vector3 startingPos = -new Vector3(board.boardSize.x * board.cellSize.x , board.boardSize.y * board.cellSize.y, 0) / 2;
+        Vector3 startingPos = board.transform.position -new Vector3(board.boardSize.x * board.cellSize.x , board.boardSize.y * board.cellSize.y, 0) / 2;
         Vector3 cellCentreOffset = new Vector3(board.cellSize.x, board.cellSize.y) / 2;
         Vector3 cellOffset = new Vector3(position.x * board.cellSize.x, position.y * board.cellSize.y, 0);
 
@@ -144,7 +144,7 @@ public class GameBoard : MonoBehaviour
 
     public static Vector2Int WorldPositionToBoardPosition(GameBoard board, Vector2 position)
     {
-        Vector2 startingPos = -new Vector3(board.boardSize.x * board.cellSize.x, board.boardSize.y * board.cellSize.y) / 2;
+        Vector2 startingPos = board.transform.position -new Vector3(board.boardSize.x * board.cellSize.x, board.boardSize.y * board.cellSize.y) / 2;
 
         Vector2 boardPosition = position - startingPos;
 

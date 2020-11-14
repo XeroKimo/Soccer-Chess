@@ -168,49 +168,13 @@ public class ChessPiece : BoardPiece
 
     public static List<BoardPiece> KnightRaycast(ChessPiece piece, GameBoard boardState, Vector2Int targetPosition)
     {
-        Vector2Int direction = targetPosition - piece.position;
 
-        Debug.Assert((Mathf.Abs(direction.x) == 1 && Mathf.Abs(direction.y) == 2) ||
-            (Mathf.Abs(direction.y) == 1 && Mathf.Abs(direction.x) == 2),
-            "The movement does not follow rules of a knight, this function will not work like you would expect\n," +
-            "Please check if the piece can move first before raycasting");
 
-        Vector2Int currentPosition = piece.position;
-        Vector2Int currentPosition2 = piece.position;
-        currentPosition2 += (direction.x == 1) ? new Vector2Int(Mathf.Clamp(direction.x, -1, 1), 0) : new Vector2Int(0, Mathf.Clamp(direction.y, -1, 1));
+        List<BoardPiece> collidedPieces = new List<BoardPiece>(1);
 
-        direction -= currentPosition2 - currentPosition;
-        direction.x = Mathf.Clamp(direction.x, -1, 1);
-        direction.y = Mathf.Clamp(direction.y, -1, 1);
-
-        List<BoardPiece> collidedPieces = new List<BoardPiece>(5);
-
-        BoardPiece checkPieceAt = boardState.GetBoardPieceAt(currentPosition2);
-
+        BoardPiece checkPieceAt = boardState.GetBoardPieceAt(targetPosition);
         if(checkPieceAt != null)
             collidedPieces.Add(checkPieceAt);
-        do
-        {
-            currentPosition += direction;
-            currentPosition2 += direction;
-
-            checkPieceAt = boardState.GetBoardPieceAt(currentPosition);
-            if(checkPieceAt != null)
-                collidedPieces.Add(checkPieceAt);
-
-            checkPieceAt = boardState.GetBoardPieceAt(currentPosition2);
-            if(checkPieceAt != null)
-                collidedPieces.Add(checkPieceAt);
-
-            if(!boardState.IsInBoardRange(currentPosition) || !boardState.IsInBoardRange(currentPosition2))
-            {
-                Debug.Log("CurrentPos: " + currentPosition + "\nCurrentPos2: " +  
-                    currentPosition2 + "\nDirection: " + direction+
-                    "\n OriginalPos: " + piece.position + "\nTargetPos: " + targetPosition);
-                break;
-            }
-
-        } while(currentPosition2 != targetPosition);
 
         return collidedPieces;
     }
