@@ -103,7 +103,7 @@ public class GameBoard : MonoBehaviour
         Debug.Assert(!IsPositionOccupied(position));
 
         piece.position = position;
-        piece.transform.position = BoardPositionToWorldPosition(this, piece.position);
+        piece.transform.position = (Vector3)BoardPositionToWorldPosition(this, piece.position) - new Vector3(0, 0, boardSize.y - position.y);
         m_boardCells[position.y, position.x].piece = piece;
         //piece.gameObject.SetActive(true);
     }

@@ -360,6 +360,7 @@ class PlayerMoveInputState : GameSubState
 
     void HideOutline(ChessPiece piece)
     {
+        piece.spriteRenderer.material.SetColor("_OutlineColor", Color.black);
         piece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
     }
 
@@ -1213,7 +1214,7 @@ class PlayerMoveState : GameSubState
         startingPos = m_possessingPiece.transform.position;
 
         gameState.movementIndicators.DeactivateAll();
-        m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
+        m_targetWorldPos = (Vector3)GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos) - new Vector3(0, 0, gameState.gameBoard.boardSize.y - m_targetBoardPos.y);
     }
 
     public override void Update()
@@ -1322,6 +1323,7 @@ class BallMoveInputState : GameSubState
             List<BoardPiece> collidedPieces = m_selectedPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
             if(collidedPieces.Count == 0)
             {
+                m_selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", Color.black);
                 m_selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
                 gameState.currentSubState = new BallMoveState(m_selectedPiece, selectedBoardPosition);
 
@@ -1332,6 +1334,7 @@ class BallMoveInputState : GameSubState
             }
             else
             {
+                m_selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", Color.black);
                 m_selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
                 gameState.currentSubState = new BallMoveState(m_selectedPiece, selectedBoardPosition);
 
@@ -1871,6 +1874,7 @@ class ReturnPiecesState : GameSubState
             {
                 gameState.gameBoard.PlacePiece(returningPiece, selectedBoardPos);
                 gameState.playerOneField.ReleaseTarget(returningPiece);
+                returningPiece.spriteRenderer.material.SetColor("_OutlineColor", Color.black);
                 returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
                 returningPiece = null;
             }
@@ -1883,6 +1887,7 @@ class ReturnPiecesState : GameSubState
             {
                 gameState.gameBoard.PlacePiece(returningPiece, selectedBoardPos);
                 gameState.playerTwoField.ReleaseTarget(returningPiece);
+                returningPiece.spriteRenderer.material.SetColor("_OutlineColor", Color.black);
                 returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
                 returningPiece = null;
             }
