@@ -508,7 +508,7 @@ class PlayerMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
-        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        for(int y = m_selectedPiece.position.y - 1; y >= 0; y--)
         {
             Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
 
@@ -638,7 +638,7 @@ class PlayerMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
-        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        for(int y = m_selectedPiece.position.y - 1; y >= 0; y--)
         {
             Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
 
@@ -1055,7 +1055,7 @@ class BallMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
-        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        for(int y = m_selectedPiece.position.y - 1; y >=0; y--)
         {
             Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
 
@@ -1185,7 +1185,7 @@ class BallMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
-        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        for(int y = m_selectedPiece.position.y - 1; y >=0; y--)
         {
             Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
 
