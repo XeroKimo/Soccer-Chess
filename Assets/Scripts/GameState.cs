@@ -17,6 +17,10 @@ public class GameState : MonoBehaviour
 
     public ChessPiece[] playerOnePieces;
     public ChessPiece[] playerTwoPieces;
+
+    public CapturedField playerOneField;
+    public CapturedField playerTwoField;
+
     public SoccerPiece soccerBall;
     public int currentPlayerTurn = 0;
 
@@ -24,6 +28,7 @@ public class GameState : MonoBehaviour
 
     public int playerOneScore { get; private set; }
     public int playerTwoScore { get; private set; }
+
 
     private void Awake()
     {
@@ -301,7 +306,7 @@ class PlayerMoveState : GameSubState
         else
             timeStretch = Mathf.Abs(posDiff.y);
 
-        startingPos = m_possessingPiece.transform.position; 
+        startingPos = m_possessingPiece.transform.position;
 
         m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
     }
@@ -341,6 +346,14 @@ class PlayerMoveState : GameSubState
             //Add piece to the remove list
 
             gameState.gameBoard.RemovePiece(chessPiece);
+            if(gameState.currentPlayerTurn == 0)
+            {
+                gameState.playerTwoField.CaptureTarget(chessPiece);
+            }
+            else
+            {
+                gameState.playerOneField.CaptureTarget(chessPiece);
+            }
             gameState.currentSubState = new ReturnPiecesState();
         }
         else
@@ -479,13 +492,100 @@ class HandleGoalState : GameSubState
 
 class ReturnPiecesState : GameSubState
 {
+    ChessPiece returningPiece;
+
+
+    Color returningColor = Color.red;
+    float width = 0.03f;
+
+
     public ReturnPiecesState()
     {
         gameState.currentPlayerTurn = (gameState.currentPlayerTurn + 1) % 2;
+
+        if(gameState.currentPlayerTurn == 0)
+        {
+            foreach(var piece in gameState.playerOneField.capturedObjects)
+            {
+                if(piece.turnsLeft == 0 && piece.piece != null)
+                {
+                    returningPiece = piece.piece;
+
+                    returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", width);
+                    returningPiece.spriteRenderer.material.SetColor("_OutlineColor", returningColor);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            foreach(var piece in gameState.playerTwoField.capturedObjects)
+            {
+                if(piece.turnsLeft == 0 && piece.piece != null)
+                {
+                    returningPiece = piece.piece;
+
+                    returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", width);
+                    returningPiece.spriteRenderer.material.SetColor("_OutlineColor", returningColor);
+                    break;
+                }
+            }
+        }
     }
 
     public override void Update()
     {
-        gameState.currentSubState = new PlayerMoveInputState();
+        if(returningPiece)
+        {
+            if(Input.GetMouseButtonDown(0))
+            {
+                HandleClick();
+            }
+        }
+        else
+        {
+            if(gameState.currentPlayerTurn == 0)
+            {
+                gameState.playerOneField.TickTurn();
+            }
+            else
+            {
+                gameState.playerTwoField.TickTurn();
+            }
+
+            gameState.currentSubState = new PlayerMoveInputState();
+        }
+    }
+
+
+    void HandleClick()
+    {
+        Vector2Int selectedBoardPos = gameState.RaycastToBoardPosition();
+
+        if(gameState.currentPlayerTurn == 0)
+        {
+            if(selectedBoardPos.x < 3 &&
+                gameState.ValidPlayerPosition(selectedBoardPos) &&
+                !gameState.gameBoard.IsPositionOccupied(selectedBoardPos))
+            {
+                gameState.gameBoard.PlacePiece(returningPiece, selectedBoardPos);
+                gameState.playerOneField.ReleaseTarget(returningPiece);
+                returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                returningPiece = null;
+            }
+        }
+        else
+        {
+            if(selectedBoardPos.x >= gameState.gameBoard.boardSize.x - 3
+                && gameState.ValidPlayerPosition(selectedBoardPos) &&
+                !gameState.gameBoard.IsPositionOccupied(selectedBoardPos))
+            {
+                gameState.gameBoard.PlacePiece(returningPiece, selectedBoardPos);
+                gameState.playerTwoField.ReleaseTarget(returningPiece);
+                returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                returningPiece = null;
+            }
+        }
+
     }
 }

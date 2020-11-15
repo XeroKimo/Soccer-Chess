@@ -105,12 +105,12 @@ public class GameBoard : MonoBehaviour
         piece.position = position;
         piece.transform.position = BoardPositionToWorldPosition(this, piece.position);
         m_boardCells[position.y, position.x].piece = piece;
-        piece.gameObject.SetActive(true);
+        //piece.gameObject.SetActive(true);
     }
 
     public void RemovePiece(BoardPiece piece)
     {
-        piece.gameObject.SetActive(false);
+        //piece.gameObject.SetActive(false);
         m_boardCells[piece.position.y, piece.position.x].piece = null;
     }
 
