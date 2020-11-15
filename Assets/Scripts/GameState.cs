@@ -401,6 +401,8 @@ class PlayerMoveInputState : GameSubState
 
         Vector2Int checkPos;
         checkPos = new Vector2Int(1, 2) + m_selectedPiece.position;
+
+        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
         if(gameState.gameBoard.IsPositionOccupied(checkPos))
         {
             if(gameState.gameBoard.GetBoardPieceAt(checkPos).team != m_selectedPiece.team)
@@ -410,6 +412,13 @@ class PlayerMoveInputState : GameSubState
                 indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
                 tileDisplayIndex++;
             }
+        }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
         }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
@@ -429,6 +438,13 @@ class PlayerMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
+        }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
             indicators.tiles[tileDisplayIndex].enabled = true;
@@ -446,6 +462,13 @@ class PlayerMoveInputState : GameSubState
                 indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
                 tileDisplayIndex++;
             }
+        }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
         }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
@@ -465,6 +488,13 @@ class PlayerMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
+        }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
             indicators.tiles[tileDisplayIndex].enabled = true;
@@ -482,6 +512,13 @@ class PlayerMoveInputState : GameSubState
                 indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
                 tileDisplayIndex++;
             }
+        }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
         }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
@@ -501,6 +538,13 @@ class PlayerMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
+        }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
             indicators.tiles[tileDisplayIndex].enabled = true;
@@ -518,6 +562,13 @@ class PlayerMoveInputState : GameSubState
                 indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
                 tileDisplayIndex++;
             }
+        }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
         }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
@@ -537,6 +588,13 @@ class PlayerMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
+        else if(checkPos == ballBoardPos)
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+            tileDisplayIndex++;
+        }
         else if(gameState.ValidPlayerPosition(checkPos))
         {
             indicators.tiles[tileDisplayIndex].enabled = true;
@@ -553,6 +611,8 @@ class PlayerMoveInputState : GameSubState
         Vector2Int boardSize = gameState.gameBoard.boardSize;
 
         int tileDisplayIndex = 0;
+
+        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
         for(int y = -1; y < 2; y++)
         {
             for(int x = -1; x < 2; x++)
@@ -568,6 +628,13 @@ class PlayerMoveInputState : GameSubState
                         indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
                         tileDisplayIndex++;
                     }
+                }
+                else if(checkPos == ballBoardPos)
+                {
+                    indicators.tiles[tileDisplayIndex].enabled = true;
+                    indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                    indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                    tileDisplayIndex++;
                 }
                 else if(gameState.ValidPlayerPosition(checkPos))
                 {
@@ -586,6 +653,7 @@ class PlayerMoveInputState : GameSubState
         Vector2Int boardSize = gameState.gameBoard.boardSize;
 
         int tileDisplayIndex = 0;
+        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
 
         for(int x = m_selectedPiece.position.x + 1; x < boardSize.x; x++)
         {
@@ -603,7 +671,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -624,9 +699,16 @@ class PlayerMoveInputState : GameSubState
                     tileDisplayIndex++;
                 }
                 break;
-            } 
+            }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -649,7 +731,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -672,7 +761,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -696,7 +792,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -721,7 +824,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -746,7 +856,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -771,7 +888,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -788,6 +912,7 @@ class PlayerMoveInputState : GameSubState
         Vector2Int boardSize = gameState.gameBoard.boardSize;
 
         int tileDisplayIndex = 0;
+        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
 
         for(int x = m_selectedPiece.position.x + 1; x < boardSize.x; x++)
         {
@@ -805,7 +930,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -828,7 +960,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -851,7 +990,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -874,7 +1020,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -891,6 +1044,7 @@ class PlayerMoveInputState : GameSubState
         Vector2Int boardSize = gameState.gameBoard.boardSize;
 
         int tileDisplayIndex = 0;
+        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
 
         Vector2Int startingOffset = new Vector2Int(-1, -1);
         for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y >= 0; offset += startingOffset)
@@ -908,7 +1062,14 @@ class PlayerMoveInputState : GameSubState
                 }
                 break;
             }
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -933,7 +1094,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -958,7 +1126,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -983,7 +1158,14 @@ class PlayerMoveInputState : GameSubState
                 break;
             }
 
-            if(gameState.ValidPlayerPosition(checkPos))
+            if(checkPos == ballBoardPos)
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+                tileDisplayIndex++;
+            }
+            else if(gameState.ValidPlayerPosition(checkPos))
             {
                 indicators.tiles[tileDisplayIndex].enabled = true;
                 indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
@@ -1008,7 +1190,7 @@ class PlayerMoveState : GameSubState
     float timeStretch;
     Vector3 startingPos;
 
-    const float movementSpeed = 3;
+    const float movementSpeed = 7;
     public PlayerMoveState(ChessPiece possessingPiece, Vector2Int targetBoardPos)
     {
         m_possessingPiece = possessingPiece;
@@ -1075,17 +1257,14 @@ class PlayerMoveState : GameSubState
             {
                 gameState.playerOneField.CaptureTarget(chessPiece);
             }
-            gameState.currentSubState = new ReturnPiecesState();
-        }
-        else
-        {
-            gameState.currentSubState = new ReturnPiecesState();
         }
 
         gameState.gameBoard.MovePiece(m_possessingPiece, m_targetBoardPos);
 
         if(collidedWithBall)
             gameState.currentSubState = new BallMoveInputState(m_possessingPiece);
+        else
+            gameState.currentSubState = new ReturnPiecesState();
     }
 }
 
@@ -1725,7 +1904,7 @@ class ReturnPiecesState : GameSubState
                 for(int x = 0; x < 3; x++)
                 {
                     Vector2Int boardPos = new Vector2Int(x, y);
-                    if(gameState.ValidPlayerPosition(boardPos))
+                    if(gameState.ValidPlayerPosition(boardPos) && !gameState.gameBoard.IsPositionOccupied(boardPos))
                     {
                         indicators.tiles[tileDisplayIndex].enabled = true;
                         indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
@@ -1741,7 +1920,7 @@ class ReturnPiecesState : GameSubState
                 for(int x = boardSize.x - 3; x < boardSize.x; x++)
                 {
                     Vector2Int boardPos = new Vector2Int(x, y);
-                    if(gameState.ValidPlayerPosition(boardPos))
+                    if(gameState.ValidPlayerPosition(boardPos) && !gameState.gameBoard.IsPositionOccupied(boardPos))
                     {
                         indicators.tiles[tileDisplayIndex].enabled = true;
                         indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
