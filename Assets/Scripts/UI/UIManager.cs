@@ -30,6 +30,7 @@ public class UIManager : MonoBehaviour
 		canvasArray[1].enabled = false;
 		canvasArray[2].enabled = false;
 		canvasArray[3].enabled = false;
+		canvasArray[4].enabled = false;
 		Pause = false;
 	}
 
@@ -75,5 +76,23 @@ public class UIManager : MonoBehaviour
 		canvasArray[2].enabled = false;
 		canvasArray[3].enabled = false;
 		Pause = false;
+	}
+
+	public void Credits()
+	{
+		canvasArray[0].enabled = false;
+		canvasArray[1].enabled = false;
+		canvasArray[2].enabled = false;
+		canvasArray[3].enabled = false;
+		canvasArray[4].enabled = true;
+	}
+
+	public void EndCredits()
+	{
+		canvasArray[0].enabled = false;
+		canvasArray[1].enabled = true;
+		canvasArray[2].enabled = false;
+		canvasArray[3].enabled = false;
+		canvasArray[4].enabled = false;
 	}
 }

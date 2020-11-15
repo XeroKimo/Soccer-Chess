@@ -194,9 +194,11 @@ public class GameState : MonoBehaviour
     {
         UIManager.Instance.Rematch();
         ResetBoard();
-        playerOneScore = playerTwoScore = 0;
+        playerOneScore = 0;
+        playerTwoScore = 0;
         currentPlayerTurn = 1;
-
+        blueScoreText.text = playerOneScore.ToString();
+        redScoreText.text = playerTwoScore.ToString();
         currentSubState = new ReturnPiecesState();
     }
 
