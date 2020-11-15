@@ -171,6 +171,12 @@ public class GameState : MonoBehaviour
             }
             GameObject WinParticleGameObject = GameObject.Instantiate(WinParticleObject);
             GameObject.Destroy(WinParticleGameObject, WinParticleGameObject.GetComponent<ParticleSystem>().main.duration);
+
+            if (playerOneScore >= 3)
+                UIManager.Instance.Win(true, false);
+
+            if (playerTwoScore >= 3)
+                UIManager.Instance.Win(false,true);
         }
         else
         {
@@ -186,6 +192,7 @@ public class GameState : MonoBehaviour
 
     public void RestartGame()
     {
+        UIManager.Instance.Rematch();
         ResetBoard();
         playerOneScore = playerTwoScore = 0;
         currentPlayerTurn = 1;
