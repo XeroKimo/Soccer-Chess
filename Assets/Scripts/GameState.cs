@@ -45,8 +45,7 @@ public class GameState : MonoBehaviour
     private void Start()
     {
         RegisterPieces();
-        currentPlayerTurn = 1;
-        currentSubState = new ReturnPiecesState();
+        RestartGame();
     }
 
     private void Update()
@@ -173,6 +172,15 @@ public class GameState : MonoBehaviour
                 SoundManager.Instance.Play(Goal);
             }
         }
+
+        currentSubState = new ReturnPiecesState();
+    }
+
+    public void RestartGame()
+    {
+        ResetBoard();
+        playerOneScore = playerTwoScore = 0;
+        currentPlayerTurn = 1;
 
         currentSubState = new ReturnPiecesState();
     }
