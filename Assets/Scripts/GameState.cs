@@ -8,6 +8,8 @@ public class GameState : MonoBehaviour
     public static GameState instance { get; private set; }
     public GameSubState currentSubState;
 
+    public MovementIndicators movementIndicators;
+
     public GameBoard gameBoard;
     public ChessPiece selectedPiece;
     public Camera mainCamera;
@@ -54,7 +56,8 @@ public class GameState : MonoBehaviour
     {
         //TrackMouse();
 
-        currentSubState.Update();
+        if(!UIManager.Instance.GetPaused())
+            currentSubState.Update();
 
         //if(Input.GetMouseButtonDown(0))
         //    RaycastBoardTarget();
@@ -219,7 +222,6 @@ class PlayerMoveInputState : GameSubState
             HandleClick();
     }
 
-
     void TrackMouse()
     {
         ChessPiece piece = gameState.gameBoard.GetBoardPieceAt(gameState.RaycastToBoardPosition()) as ChessPiece;
@@ -267,9 +269,13 @@ class PlayerMoveInputState : GameSubState
             if(m_selectedPiece)
                 HideOutline(m_selectedPiece);
 
+            gameState.movementIndicators.DeactivateAll();
+
             m_selectedPiece = m_overlappedPiece;
             ShowOutline(m_selectedPiece, select);
             m_overlappedPiece = null;
+
+            DisplayMoves();
         }
         else if(m_selectedPiece)
         {
@@ -296,12 +302,14 @@ class PlayerMoveInputState : GameSubState
                 {
                     HideOutline(m_selectedPiece);
                     m_selectedPiece = null;
+                    gameState.movementIndicators.DeactivateAll();
                 }
             }
             else
             {
                 HideOutline(m_selectedPiece);
                 m_selectedPiece = null;
+                gameState.movementIndicators.DeactivateAll();
             }
         }
     }
@@ -315,6 +323,403 @@ class PlayerMoveInputState : GameSubState
     {
         piece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
         piece.spriteRenderer.material.SetColor("_OutlineColor", color);
+    }
+
+    void DisplayMoves()
+    {
+        Color color = Color.white;
+        color.a = 0.5f;
+
+        gameState.movementIndicators.SetColor(color);
+
+        switch(m_selectedPiece.type)
+        {
+        case ChessType.Knight:
+            DisplayKnight();
+            break;
+        case ChessType.Bishop:
+            DisplayBishop();
+            break;
+        case ChessType.Rook:
+            DisplayRook();
+            break;
+        case ChessType.Queen:
+            DisplayQueen();
+            break;
+        case ChessType.King:
+            DisplayKing();
+            break;
+        }
+    }
+
+    void DisplayKnight()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        Vector2Int checkPos;
+        checkPos = new Vector2Int(1, 2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+        
+        checkPos = new Vector2Int(1, -2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+        
+        checkPos = new Vector2Int(-1, 2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+        
+        checkPos = new Vector2Int(-1, -2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+        
+        checkPos = new Vector2Int(2, 1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+        
+        checkPos = new Vector2Int(-2, 1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+        
+        checkPos = new Vector2Int(2, -1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+        
+        checkPos = new Vector2Int(-2, -1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+    }
+
+    void DisplayKing()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+        for(int y = -1; y < 2; y++)
+        {
+            for(int x = -1; x < 2; x++)
+            {
+                Vector2Int checkPos = new Vector2Int(x, y) + m_selectedPiece.position;
+
+                if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+                {
+                    indicators.tiles[tileDisplayIndex].enabled = true;
+                    indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                    tileDisplayIndex++;
+                }
+            }
+        }
+    }
+
+    void DisplayQueen()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        for(int x = m_selectedPiece.position.x + 1; x < boardSize.x; x++)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int x = m_selectedPiece.position.x - 1; x > 0; x--)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y + 1; y < boardSize.y; y++)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        Vector2Int startingOffset = new Vector2Int(-1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(-1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+    }
+
+    void DisplayRook()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        for(int x = m_selectedPiece.position.x + 1; x < boardSize.x; x++)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int x = m_selectedPiece.position.x - 1; x > 0; x --)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y + 1; y < boardSize.y; y++)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+    }
+
+    void DisplayBishop()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        Vector2Int startingOffset = new Vector2Int(-1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        
+        startingOffset = new Vector2Int(1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        
+        startingOffset = new Vector2Int(-1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        
+        startingOffset = new Vector2Int(1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+
     }
 }
 
@@ -346,6 +751,7 @@ class PlayerMoveState : GameSubState
 
         startingPos = m_possessingPiece.transform.position;
 
+        gameState.movementIndicators.DeactivateAll();
         m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
     }
 
@@ -375,9 +781,10 @@ class PlayerMoveState : GameSubState
         Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
         ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(m_targetBoardPos) as ChessPiece;
 
+        bool collidedWithBall = false;
         if(ballBoardPos == m_targetBoardPos)
         {
-            gameState.currentSubState = new BallMoveInputState(m_possessingPiece);
+            collidedWithBall = true;
         }
         else if(chessPiece)
         {
@@ -404,22 +811,27 @@ class PlayerMoveState : GameSubState
         }
 
         gameState.gameBoard.MovePiece(m_possessingPiece, m_targetBoardPos);
+
+        if(collidedWithBall)
+            gameState.currentSubState = new BallMoveInputState(m_possessingPiece);
     }
 }
 
 class BallMoveInputState : GameSubState
 {
-    ChessPiece m_possessingPiece;
+    ChessPiece m_selectedPiece;
     Color ballPossession = Color.blue;
 
     const float outlineWidth = 0.03f;
 
     public BallMoveInputState(ChessPiece possessingPiece)
     {
-        m_possessingPiece = possessingPiece;
+        m_selectedPiece = possessingPiece;
 
-        m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
-        m_possessingPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
+        m_selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
+        m_selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
+
+        DisplayMoves();
     }
 
     public override void Update()
@@ -431,13 +843,13 @@ class BallMoveInputState : GameSubState
     void HandleClick()
     {
         Vector2Int selectedBoardPosition = gameState.RaycastToBoardPosition();
-        if(m_possessingPiece.CanMove(gameState.gameBoard, selectedBoardPosition) && gameState.ValidBallPosition(selectedBoardPosition))
+        if(m_selectedPiece.CanMove(gameState.gameBoard, selectedBoardPosition) && gameState.ValidBallPosition(selectedBoardPosition))
         {
-            List<BoardPiece> collidedPieces = m_possessingPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
+            List<BoardPiece> collidedPieces = m_selectedPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
             if(collidedPieces.Count == 0)
             {
-                m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                gameState.currentSubState = new BallMoveState(m_possessingPiece, selectedBoardPosition);
+                m_selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                gameState.currentSubState = new BallMoveState(m_selectedPiece, selectedBoardPosition);
 
                 if(SoundManager.Instance)
                 {
@@ -446,8 +858,8 @@ class BallMoveInputState : GameSubState
             }
             else
             {
-                m_possessingPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                gameState.currentSubState = new BallMoveState(m_possessingPiece, selectedBoardPosition);
+                m_selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
+                gameState.currentSubState = new BallMoveState(m_selectedPiece, selectedBoardPosition);
 
                 if(SoundManager.Instance)
                 {
@@ -455,6 +867,404 @@ class BallMoveInputState : GameSubState
                 }
             }
         }
+    }
+
+
+
+    void DisplayMoves()
+    {
+        Color color = Color.blue;
+        color.a = 0.5f;
+
+        gameState.movementIndicators.SetColor(color);
+        switch(m_selectedPiece.type)
+        {
+        case ChessType.Knight:
+            DisplayKnight();
+            break;
+        case ChessType.Bishop:
+            DisplayBishop();
+            break;
+        case ChessType.Rook:
+            DisplayRook();
+            break;
+        case ChessType.Queen:
+            DisplayQueen();
+            break;
+        case ChessType.King:
+            DisplayKing();
+            break;
+        }
+    }
+
+    void DisplayKnight()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        Vector2Int checkPos;
+        checkPos = new Vector2Int(1, 2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+        checkPos = new Vector2Int(1, -2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+        checkPos = new Vector2Int(-1, 2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+        checkPos = new Vector2Int(-1, -2) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+        checkPos = new Vector2Int(2, 1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+        checkPos = new Vector2Int(-2, 1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+        checkPos = new Vector2Int(2, -1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+        checkPos = new Vector2Int(-2, -1) + m_selectedPiece.position;
+        if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+        {
+            indicators.tiles[tileDisplayIndex].enabled = true;
+            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+            tileDisplayIndex++;
+        }
+
+    }
+
+    void DisplayKing()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+        for(int y = -1; y < 2; y++)
+        {
+            for(int x = -1; x < 2; x++)
+            {
+                Vector2Int checkPos = new Vector2Int(x, y) + m_selectedPiece.position;
+
+                if(!gameState.gameBoard.IsPositionOccupied(checkPos) && gameState.ValidPlayerPosition(checkPos))
+                {
+                    indicators.tiles[tileDisplayIndex].enabled = true;
+                    indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                    tileDisplayIndex++;
+                }
+            }
+        }
+    }
+
+    void DisplayQueen()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        for(int x = m_selectedPiece.position.x + 1; x < boardSize.x; x++)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int x = m_selectedPiece.position.x - 1; x > 0; x--)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y + 1; y < boardSize.y; y++)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        Vector2Int startingOffset = new Vector2Int(-1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(-1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+    }
+
+    void DisplayRook()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        for(int x = m_selectedPiece.position.x + 1; x < boardSize.x; x++)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int x = m_selectedPiece.position.x - 1; x > 0; x--)
+        {
+            Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y + 1; y < boardSize.y; y++)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+        for(int y = m_selectedPiece.position.y - 1; y > boardSize.y; y--)
+        {
+            Vector2Int checkPos = new Vector2Int(m_selectedPiece.position.x, y);
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+    }
+
+    void DisplayBishop()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+
+        Vector2Int startingOffset = new Vector2Int(-1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(1, -1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y >= 0; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(-1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+        startingOffset = new Vector2Int(1, 1);
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x < boardSize.x && offset.y <= boardSize.y; offset += startingOffset)
+        {
+            Vector2Int checkPos = offset;
+
+            if(gameState.gameBoard.IsPositionOccupied(checkPos))
+                break;
+
+            if(gameState.ValidPlayerPosition(checkPos))
+            {
+                indicators.tiles[tileDisplayIndex].enabled = true;
+                indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, checkPos);
+                tileDisplayIndex++;
+            }
+        }
+
+
     }
 }
 
@@ -474,6 +1284,8 @@ class BallMoveState : GameSubState
 
         m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
         startingPos = gameState.soccerBall.transform.position;
+
+        gameState.movementIndicators.DeactivateAll();
     }
 
     public override void Update()
@@ -540,7 +1352,9 @@ class ReturnPiecesState : GameSubState
     Color returningColor = Color.red;
     float width = 0.03f;
 
+    float time;
 
+    int colorDirection = 1;
     public ReturnPiecesState()
     {
         gameState.currentPlayerTurn = (gameState.currentPlayerTurn + 1) % 2;
@@ -573,6 +1387,9 @@ class ReturnPiecesState : GameSubState
                 }
             }
         }
+
+        if(returningPiece)
+            DisplayMoves();
     }
 
     public override void Update()
@@ -595,10 +1412,21 @@ class ReturnPiecesState : GameSubState
                 gameState.playerTwoField.TickTurn();
             }
 
+            gameState.movementIndicators.DeactivateAll();
             gameState.currentSubState = new PlayerMoveInputState();
         }
-    }
 
+        Color color = Color.red;
+        color.a = time;
+        gameState.movementIndicators.SetColor(color);
+
+
+        time += Time.deltaTime * colorDirection;
+        if(time >= 1)
+            colorDirection = -1;
+        else if(time <= 0)
+            colorDirection = 1;
+    }
 
     void HandleClick()
     {
@@ -629,5 +1457,49 @@ class ReturnPiecesState : GameSubState
             }
         }
 
+    }
+
+    void DisplayMoves()
+    {
+        MovementIndicators indicators = gameState.movementIndicators;
+
+        Vector2Int boardSize = gameState.gameBoard.boardSize;
+
+        int tileDisplayIndex = 0;
+        indicators.SetColor(Color.red - new Color(0, 0, 0, 1));
+
+
+        if(gameState.currentPlayerTurn == 0)
+        {
+            for(int y = 0; y < boardSize.y; y++)
+            {
+                for(int x = 0; x < 3; x++)
+                {
+                    Vector2Int boardPos = new Vector2Int(x, y);
+                    if(gameState.ValidPlayerPosition(boardPos))
+                    {
+                        indicators.tiles[tileDisplayIndex].enabled = true;
+                        indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
+                        tileDisplayIndex++;
+                    }
+                }
+            }
+        }
+        else
+        {
+            for(int y = 0; y < boardSize.y; y++)
+            {
+                for(int x = boardSize.x - 3; x < boardSize.x; x++)
+                {
+                    Vector2Int boardPos = new Vector2Int(x, y);
+                    if(gameState.ValidPlayerPosition(boardPos))
+                    {
+                        indicators.tiles[tileDisplayIndex].enabled = true;
+                        indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
+                        tileDisplayIndex++;
+                    }
+                }
+            }
+        }
     }
 }

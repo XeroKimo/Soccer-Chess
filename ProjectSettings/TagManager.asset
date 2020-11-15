@@ -41,6 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Movement overlay
+    uniqueID: 2642495405
+    locked: 0
   - name: Chess Piece
     uniqueID: 3850705719
     locked: 0
