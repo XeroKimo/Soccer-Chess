@@ -28,6 +28,8 @@ public class UIManager : MonoBehaviour
 		DontDestroyOnLoad(gameObject);
 		canvasArray[0].enabled = true;
 		canvasArray[1].enabled = false;
+		canvasArray[2].enabled = false;
+		canvasArray[3].enabled = false;
 		Pause = false;
 	}
 
@@ -59,5 +61,19 @@ public class UIManager : MonoBehaviour
 	public void Quit()
 	{
 		Application.Quit();
+	}
+
+	public void Win(bool blue = false,bool red = false)
+	{
+		canvasArray[2].enabled = blue;
+		canvasArray[3].enabled = red;
+	}
+	public void Rematch()
+	{
+		canvasArray[0].enabled = true;
+		canvasArray[1].enabled = false;
+		canvasArray[2].enabled = false;
+		canvasArray[3].enabled = false;
+		Pause = false;
 	}
 }
