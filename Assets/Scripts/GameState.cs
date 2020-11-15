@@ -26,6 +26,8 @@ public class GameState : MonoBehaviour
 
     public SoccerPiece soccerBall;
 
+    public GameObject WinParticleObject;
+
     public Text blueScoreText;
     public Text redScoreText;
 
@@ -163,6 +165,8 @@ public class GameState : MonoBehaviour
             {
                 SoundManager.Instance.Play(End);
             }
+            GameObject WinParticleGameObject = GameObject.Instantiate(WinParticleObject);
+            GameObject.Destroy(WinParticleGameObject, WinParticleGameObject.GetComponent<ParticleSystem>().main.duration);
         }
         else
         {
