@@ -60,11 +60,17 @@ public class SoundManager : MonoBehaviour
 		EffectsSource.Play();
 	}
 
-	public void SetSound(float soundLevel)
+	public void SetMasterSound(float soundLevel)
 	{
-		Debug.Log(soundLevel);
-		//EffectsSource.volume = soundLevel;
-		//MusicSource.volume = soundLevel;
+		Debug.Log("mastervol: "+ soundLevel);
 		masterMixer.SetFloat("mastervol", soundLevel);
+	}
+	public void SetSFXSound(float soundLevel)
+	{
+		masterMixer.SetFloat("sfxvol", soundLevel);
+	}
+	public void SetMusicSound(float soundLevel)
+	{
+		masterMixer.SetFloat("musicvol", soundLevel);
 	}
 }
