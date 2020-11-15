@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class GameState : MonoBehaviour
 {
@@ -10,14 +11,20 @@ public class GameState : MonoBehaviour
     public GameBoard gameBoard;
     public ChessPiece selectedPiece;
     public Camera mainCamera;
+
     public AudioClip Goal;
     public AudioClip End;
+    public AudioClip Hit;
     public AudioClip[] audioClipWalkingArray;
     public AudioClip[] audioClipKickingArray;
 
     public ChessPiece[] playerOnePieces;
     public ChessPiece[] playerTwoPieces;
     public SoccerPiece soccerBall;
+
+    public Text blueScoreText;
+    public Text redScoreText;
+
     public int currentPlayerTurn = 0;
 
     public int goalSize = 3;
@@ -133,14 +140,33 @@ public class GameState : MonoBehaviour
 
     public void HandleGoal()
     {
+        
         ResetBoard();
         if(currentPlayerTurn == 0)
         {
             playerOneScore++;
+            blueScoreText.text = playerOneScore.ToString();
         }
         else
         {
             playerTwoScore++;
+            redScoreText.text = playerOneScore.ToString();
+        }
+
+        if(playerTwoScore>=3 || playerOneScore >= 3)
+        {
+            if (SoundManager.Instance)
+            {
+                SoundManager.Instance.Play(End);
+            }
+        }
+        else
+        {
+            Debug.Log("Goal!");
+            if (SoundManager.Instance)
+            {
+                SoundManager.Instance.Play(Goal);
+            }
         }
 
         currentSubState = new ReturnPiecesState();
@@ -339,6 +365,10 @@ class PlayerMoveState : GameSubState
         else if(chessPiece)
         {
             //Add piece to the remove list
+            if (SoundManager.Instance)
+            {
+                SoundManager.Instance.Play(gameState.Hit);
+            }
 
             gameState.gameBoard.RemovePiece(chessPiece);
             gameState.currentSubState = new ReturnPiecesState();
