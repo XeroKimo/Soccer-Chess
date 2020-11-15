@@ -488,7 +488,7 @@ class BallMoveState : GameSubState
 
         if(chessPiece)
         {
-            if(chessPiece != m_originalKicker)
+            if(chessPiece != m_originalKicker && m_originalKicker.type != ChessType.Knight)
             {
                 gameState.currentSubState = new BallMoveInputState(chessPiece);
                 gameState.soccerBall.transform.position = chessPiece.transform.position;
