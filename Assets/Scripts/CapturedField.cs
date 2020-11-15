@@ -67,6 +67,13 @@ public class CapturedField : MonoBehaviour
         }
     }
 
+    public void ClearField()
+    {
+        for(int i = 0; i < capturedObjects.Length; i++)
+        {
+            capturedObjects[i].piece = null;
+        }
+    }
 
 
     private void OnDrawGizmos()

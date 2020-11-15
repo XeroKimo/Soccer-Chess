@@ -113,6 +113,9 @@ public class GameState : MonoBehaviour
             gameBoard.PlacePiece(piece, piece.initialPosition);
         }
 
+        playerOneField.ClearField();
+        playerTwoField.ClearField();
+
         soccerBall.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition);
     }
 
@@ -156,13 +159,17 @@ public class GameState : MonoBehaviour
         {
             Debug.Log("Player One Scored");
             playerOneScore++;
+            
             blueScoreText.text = playerOneScore.ToString();
+
+            currentPlayerTurn = 0;
         }
         else
         {
             Debug.Log("Player Two Scored");
             playerTwoScore++;
             redScoreText.text = playerTwoScore.ToString();
+            currentPlayerTurn = 1;
         }
 
         if(playerTwoScore >= 3 || playerOneScore >= 3)
@@ -1336,8 +1343,6 @@ class BallMoveInputState : GameSubState
         }
     }
 
-
-
     void DisplayMoves()
     {
         if(!gameState.displayMoveIndicators)
@@ -1483,7 +1488,7 @@ class BallMoveInputState : GameSubState
                 tileDisplayIndex++;
             }
         }
-        for(int x = m_selectedPiece.position.x - 1; x > 0; x--)
+        for(int x = m_selectedPiece.position.x - 1; x >= 0; x--)
         {
             Vector2Int checkPos = new Vector2Int(x, m_selectedPiece.position.y);
 
@@ -1517,7 +1522,7 @@ class BallMoveInputState : GameSubState
             }
         }
         Vector2Int startingOffset = new Vector2Int(-1, -1);
-        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y >= 0; offset += startingOffset)
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x >= 0 && offset.y >= 0; offset += startingOffset)
         {
             Vector2Int checkPos = offset;
 
@@ -1543,7 +1548,7 @@ class BallMoveInputState : GameSubState
         }
 
         startingOffset = new Vector2Int(-1, 1);
-        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y <= boardSize.y; offset += startingOffset)
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x >= 0 && offset.y <= boardSize.y; offset += startingOffset)
         {
             Vector2Int checkPos = offset;
 
@@ -1635,7 +1640,7 @@ class BallMoveInputState : GameSubState
         int tileDisplayIndex = 0;
 
         Vector2Int startingOffset = new Vector2Int(-1, -1);
-        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y >= 0; offset += startingOffset)
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x >= 0 && offset.y >= 0; offset += startingOffset)
         {
             Vector2Int checkPos = offset;
 
@@ -1663,7 +1668,7 @@ class BallMoveInputState : GameSubState
         }
 
         startingOffset = new Vector2Int(-1, 1);
-        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x > 0 && offset.y <= boardSize.y; offset += startingOffset)
+        for(Vector2Int offset = m_selectedPiece.position + startingOffset; offset.x >= 0 && offset.y <= boardSize.y; offset += startingOffset)
         {
             Vector2Int checkPos = offset;
             
