@@ -40,6 +40,7 @@ public class GameState : MonoBehaviour
     public int playerOneScore { get; private set; }
     public int playerTwoScore { get; private set; }
 
+    public bool displayMoveIndicators = true;
 
     private void Awake()
     {
@@ -149,7 +150,7 @@ public class GameState : MonoBehaviour
 
     public void HandleGoal()
     {
-        
+
         ResetBoard();
         if(currentPlayerTurn == 0)
         {
@@ -162,9 +163,9 @@ public class GameState : MonoBehaviour
             redScoreText.text = playerOneScore.ToString();
         }
 
-        if(playerTwoScore>=3 || playerOneScore >= 3)
+        if(playerTwoScore >= 3 || playerOneScore >= 3)
         {
-            if (SoundManager.Instance)
+            if(SoundManager.Instance)
             {
                 SoundManager.Instance.Play(End);
             }
@@ -174,7 +175,7 @@ public class GameState : MonoBehaviour
         else
         {
             Debug.Log("Goal!");
-            if (SoundManager.Instance)
+            if(SoundManager.Instance)
             {
                 SoundManager.Instance.Play(Goal);
             }
@@ -190,6 +191,11 @@ public class GameState : MonoBehaviour
         currentPlayerTurn = 1;
 
         currentSubState = new ReturnPiecesState();
+    }
+
+    public void ToggleMoveIndicators()
+    {
+        displayMoveIndicators = !displayMoveIndicators;
     }
 
 }
@@ -327,6 +333,8 @@ class PlayerMoveInputState : GameSubState
 
     void DisplayMoves()
     {
+        if(!gameState.displayMoveIndicators)
+            return;
         Color color = Color.white;
         color.a = 0.5f;
 
@@ -873,6 +881,8 @@ class BallMoveInputState : GameSubState
 
     void DisplayMoves()
     {
+        if(!gameState.displayMoveIndicators)
+            return;
         Color color = Color.blue;
         color.a = 0.5f;
 
@@ -1461,6 +1471,8 @@ class ReturnPiecesState : GameSubState
 
     void DisplayMoves()
     {
+        if(!gameState.displayMoveIndicators)
+            return;
         MovementIndicators indicators = gameState.movementIndicators;
 
         Vector2Int boardSize = gameState.gameBoard.boardSize;
