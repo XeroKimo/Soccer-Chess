@@ -231,12 +231,30 @@ class PlayerMoveInputState : GameSubState
     ChessPiece m_overlappedPiece;
     ChessPiece m_selectedPiece;
 
+    bool m_oldMoveDisplay;
+
+    public PlayerMoveInputState()
+    {
+
+        m_oldMoveDisplay = gameState.displayMoveIndicators;
+    }
 
     public override void Update()
     {
         TrackMouse();
         if(Input.GetMouseButtonDown(0))
             HandleClick();
+
+
+        if(m_oldMoveDisplay != gameState.displayMoveIndicators)
+        {
+            if(gameState.displayMoveIndicators && m_selectedPiece)
+                DisplayMoves();
+            else
+                gameState.movementIndicators.DeactivateAll();
+        }
+
+        m_oldMoveDisplay = gameState.displayMoveIndicators;
     }
 
     void TrackMouse()
@@ -1075,7 +1093,7 @@ class BallMoveInputState : GameSubState
     Color ballPossession = Color.blue;
 
     const float outlineWidth = 0.03f;
-
+    bool m_oldMoveDisplay;
     public BallMoveInputState(ChessPiece possessingPiece)
     {
         m_selectedPiece = possessingPiece;
@@ -1083,13 +1101,29 @@ class BallMoveInputState : GameSubState
         m_selectedPiece.spriteRenderer.material.SetFloat("_OutlineWidth", outlineWidth);
         m_selectedPiece.spriteRenderer.material.SetColor("_OutlineColor", ballPossession);
 
+
+
         DisplayMoves();
+
+        m_oldMoveDisplay = gameState.displayMoveIndicators;
     }
 
     public override void Update()
     {
         if(Input.GetMouseButtonDown(0))
             HandleClick();
+
+
+        if(m_oldMoveDisplay != gameState.displayMoveIndicators)
+        {
+            if(gameState.displayMoveIndicators)
+                DisplayMoves();
+            else
+                gameState.movementIndicators.DeactivateAll();
+        }
+
+        m_oldMoveDisplay = gameState.displayMoveIndicators;
+        
     }
 
     void HandleClick()
