@@ -39,21 +39,25 @@ public class UIManager : MonoBehaviour
 	{
 		if (Input.GetKeyDown("escape"))
 		{
-			if (Pause == false)
-			{
-				Pause = true;
-				canvasArray[0].enabled = false;
-				canvasArray[1].enabled = true;
-			}
-			else
-			{
-				Pause = false;
-				canvasArray[0].enabled = true;
-				canvasArray[1].enabled = false;
-			}
+			SetPause();
 		}
 	}
 
+	public void SetPause()
+	{
+		if (Pause == false)
+		{
+			Pause = true;
+			canvasArray[0].enabled = false;
+			canvasArray[1].enabled = true;
+		}
+		else
+		{
+			Pause = false;
+			canvasArray[0].enabled = true;
+			canvasArray[1].enabled = false;
+		}
+	}
 	public bool GetPaused()
 	{
 		return Pause;
