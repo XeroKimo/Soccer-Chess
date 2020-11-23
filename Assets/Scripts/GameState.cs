@@ -89,7 +89,7 @@ public class GameState : MonoBehaviour
 
         //gameBoard.RegisterPiece(soccerPiece, GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position), 2);
         soccerBall.initialPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, soccerBall.transform.position);
-        soccerBall.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition);
+        soccerBall.transform.position = (Vector3) GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition) - new Vector3(0, 0, 9);
     }
 
     void ResetBoard()
@@ -116,7 +116,7 @@ public class GameState : MonoBehaviour
         playerOneField.ClearField();
         playerTwoField.ClearField();
 
-        soccerBall.transform.position = GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition);
+        soccerBall.transform.position = (Vector3)GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition) - new Vector3(0, 0, 9);
     }
 
     private void OnDrawGizmos()
@@ -1707,7 +1707,7 @@ class BallMoveState : GameSubState
     ChessPiece m_originalKicker;
     Vector2Int m_targetBoardPos;
 
-    Vector2 m_targetWorldPos;
+    Vector3 m_targetWorldPos;
     float time = 0;
     Vector3 startingPos;
 
@@ -1716,7 +1716,7 @@ class BallMoveState : GameSubState
         m_originalKicker = kicker;
         m_targetBoardPos = targetBoardPos;
 
-        m_targetWorldPos = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos);
+        m_targetWorldPos = (Vector3)GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos) + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
         startingPos = gameState.soccerBall.transform.position;
 
         gameState.movementIndicators.DeactivateAll();
@@ -1741,11 +1741,11 @@ class BallMoveState : GameSubState
             if(chessPiece != m_originalKicker && m_originalKicker.type != ChessType.Knight)
             {
                 gameState.currentSubState = new BallMoveInputState(chessPiece);
-                gameState.soccerBall.transform.position = chessPiece.transform.position;
+                gameState.soccerBall.transform.position = (Vector3)((Vector2)chessPiece.transform.position) + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
             }
         }
 
-        if((Vector2)gameState.soccerBall.transform.position == m_targetWorldPos)
+        if(gameState.soccerBall.transform.position == m_targetWorldPos)
         {
             HandleMoveEnd();
         }
@@ -1789,6 +1789,8 @@ class ReturnPiecesState : GameSubState
     float time;
 
     int colorDirection = 1;
+
+    bool placedOnBall = false;
     public ReturnPiecesState()
     {
         gameState.currentPlayerTurn = (gameState.currentPlayerTurn + 1) % 2;
@@ -1830,6 +1832,8 @@ class ReturnPiecesState : GameSubState
     {
         if(returningPiece)
         {
+            UpdateTileColors();
+
             if(Input.GetMouseButtonDown(0))
             {
                 HandleClick();
@@ -1837,23 +1841,19 @@ class ReturnPiecesState : GameSubState
         }
         else
         {
-            if(gameState.currentPlayerTurn == 0)
-            {
-                gameState.playerOneField.TickTurn();
-            }
-            else
-            {
-                gameState.playerTwoField.TickTurn();
-            }
-
-            gameState.movementIndicators.DeactivateAll();
-            gameState.currentSubState = new PlayerMoveInputState();
+            StartNextTurn();
         }
+    }
 
-        Color color = Color.red;
-        color.a = time;
-        gameState.movementIndicators.SetColor(color);
+    void UpdateTileColors()
+    {
 
+        foreach(SpriteRenderer tile in gameState.movementIndicators.tiles)
+        {
+            Color color = tile.color;
+            color.a = time;
+            tile.color = color;
+        }
 
         time += Time.deltaTime * colorDirection;
         if(time >= 1)
@@ -1866,6 +1866,9 @@ class ReturnPiecesState : GameSubState
     {
         Vector2Int selectedBoardPos = gameState.RaycastToBoardPosition();
 
+        Vector2Int soccerBallPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
+
+        placedOnBall = selectedBoardPos == soccerBallPos;
         if(gameState.currentPlayerTurn == 0)
         {
             if(selectedBoardPos.x < 3 &&
@@ -1876,7 +1879,7 @@ class ReturnPiecesState : GameSubState
                 gameState.playerOneField.ReleaseTarget(returningPiece);
                 returningPiece.spriteRenderer.material.SetColor("_OutlineColor", Color.black);
                 returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                returningPiece = null;
+                StartNextTurn();
             }
         }
         else
@@ -1889,10 +1892,29 @@ class ReturnPiecesState : GameSubState
                 gameState.playerTwoField.ReleaseTarget(returningPiece);
                 returningPiece.spriteRenderer.material.SetColor("_OutlineColor", Color.black);
                 returningPiece.spriteRenderer.material.SetFloat("_OutlineWidth", 0);
-                returningPiece = null;
+                StartNextTurn();
             }
         }
 
+    }
+
+    void StartNextTurn()
+    {
+        if(gameState.currentPlayerTurn == 0)
+        {
+            gameState.playerOneField.TickTurn();
+        }
+        else
+        {
+            gameState.playerTwoField.TickTurn();
+        }
+
+        gameState.movementIndicators.DeactivateAll();
+
+        if(placedOnBall)
+            gameState.currentSubState = new BallMoveInputState(returningPiece);
+        else
+            gameState.currentSubState = new PlayerMoveInputState();
     }
 
     void DisplayMoves()
@@ -1906,6 +1928,7 @@ class ReturnPiecesState : GameSubState
         int tileDisplayIndex = 0;
         indicators.SetColor(Color.red - new Color(0, 0, 0, 1));
 
+        Vector2Int soccerBallPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
 
         if(gameState.currentPlayerTurn == 0)
         {
@@ -1918,6 +1941,10 @@ class ReturnPiecesState : GameSubState
                     {
                         indicators.tiles[tileDisplayIndex].enabled = true;
                         indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
+
+                        if(boardPos == soccerBallPos)
+                            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+
                         tileDisplayIndex++;
                     }
                 }
@@ -1934,6 +1961,9 @@ class ReturnPiecesState : GameSubState
                     {
                         indicators.tiles[tileDisplayIndex].enabled = true;
                         indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
+                        if(boardPos == soccerBallPos)
+                            indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
+
                         tileDisplayIndex++;
                     }
                 }
