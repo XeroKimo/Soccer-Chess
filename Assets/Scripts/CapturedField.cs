@@ -80,7 +80,7 @@ public class CapturedField : MonoBehaviour
     {
         foreach(Transform point in m_transformPoints)
         {
-            Gizmos.DrawWireCube(point.position, Vector3.one);
+            Gizmos.DrawWireCube(point.position, Vector3.one * 4.01f);
         }
     }
 }
