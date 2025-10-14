@@ -6,6 +6,15 @@
       "source": "builtin",
       "dependencies": {}
     },
+    "com.unity.2d.tilemap": {
+      "version": "1.0.0",
+      "depth": 0,
+      "source": "builtin",
+      "dependencies": {
+        "com.unity.modules.tilemap": "1.0.0",
+        "com.unity.modules.uielements": "1.0.0"
+      }
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.7",
       "depth": 0,
@@ -84,6 +93,13 @@
         "com.unity.modules.ui": "1.0.0",
         "com.unity.modules.imgui": "1.0.0"
       }
+    },
+    "com.xksl.sceneinitializer": {
+      "version": "https://github.com/XeroKimo/xksl.SceneInitializer.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "32d227585508907f9313aaa46794e0118f7b409e"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

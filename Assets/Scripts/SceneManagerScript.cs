@@ -32,6 +32,6 @@ public class SceneManagerScript : MonoBehaviour
 
     void LoadMenuScene()
     {
-        SceneManager.LoadScene(1);
+        xksl.SceneManager.LoadScene(1);
     }
 }

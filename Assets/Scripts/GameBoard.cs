@@ -77,17 +77,13 @@ public class GameBoard : MonoBehaviour
         return true;
     }
 
-    public void RegisterPiece(BoardPiece piece, Vector2Int position, byte team)
+    public BoardPiece RegisterPiece(BoardPiece piece, Vector2Int position, byte team)
     {
+        Debug.Assert(IsInBoardRange(position), piece.name + ": Position is not within the board's range", piece);
+        Debug.Assert(!IsPositionOccupied(position), piece.name + ": Positon already occupied", piece);
+
         m_boardPieces.Add(piece);
 
-        Debug.Assert(IsInBoardRange(position),
-            piece.name + ": Position is not within the board's range");
-
-        foreach(BoardPiece boardPiece in boardPieces)
-        {
-            Debug.Assert(boardPiece.position != position, piece.name + ": Position is not within the board's range");
-        }
 
         piece.position = position;
         piece.initialPosition = position;
@@ -96,6 +92,8 @@ public class GameBoard : MonoBehaviour
         piece.team = team;
 
         m_boardCells[position.y, position.x].piece = piece;
+
+        return piece;
     }
 
     public void PlacePiece(BoardPiece piece, Vector2Int position)
@@ -129,8 +127,8 @@ public class GameBoard : MonoBehaviour
 
     public bool IsInBoardRange(Vector2Int position)
     {
-        return position.x >= 0 && position.x < boardSize.x &&
-               position.y >= 0 && position.y < boardSize.y;
+        return new ChainCompare<int>(0) <= position.x < boardSize.x
+            && new ChainCompare<int>(0) <= position.y < boardSize.y;
     }
 
     public static Vector2 BoardPositionToWorldPosition(GameBoard board, Vector2Int position)

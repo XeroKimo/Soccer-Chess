@@ -1,7 +1,119 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+
+struct ChainCompare<T>
+{
+    T value;
+    bool isValid;
+
+    public ChainCompare(T value)
+    {
+        isValid = true;
+        this.value = value;
+    }
+
+    private ChainCompare(T value, bool isValid)
+    {
+        this.value = value;
+        this.isValid = isValid;
+    }
+
+    public static ChainCompare<T> operator ==(ChainCompare<T> left, T right)
+    {
+        return new ChainCompare<T>(right, left.isValid && EqualityComparer<T>.Default.Equals(left.value, right));
+    }
+    public static ChainCompare<T> operator !=(ChainCompare<T> left, T right)
+    {
+        return new ChainCompare<T>(right, left.isValid && !EqualityComparer<T>.Default.Equals(left.value, right));
+    }
+    public static ChainCompare<T> operator <=(ChainCompare<T> left, T right)
+    {
+        return new ChainCompare<T>(right, left.isValid && Comparer<T>.Default.Compare(left.value, right) <= 0);
+    }
+    public static ChainCompare<T> operator >=(ChainCompare<T> left, T right)
+    {
+        return new ChainCompare<T>(right, left.isValid && Comparer<T>.Default.Compare(left.value, right) >= 0);
+    }
+    public static ChainCompare<T> operator <(ChainCompare<T> left, T right)
+    {
+        return new ChainCompare<T>(right, left.isValid && Comparer<T>.Default.Compare(left.value, right) < 0);
+    }
+    public static ChainCompare<T> operator >(ChainCompare<T> left, T right)
+    {
+        return new ChainCompare<T>(right, left.isValid && Comparer<T>.Default.Compare(left.value, right) > 0);
+    }
+
+    public static ChainCompare<T> operator ==(T left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, EqualityComparer<T>.Default.Equals(left, right.value) && right.isValid);
+    }
+    public static ChainCompare<T> operator !=(T left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, !EqualityComparer<T>.Default.Equals(left, right.value) && right.isValid);
+    }
+    public static ChainCompare<T> operator <=(T left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, Comparer<T>.Default.Compare(left, right.value) <= 0 && right.isValid);
+    }
+    public static ChainCompare<T> operator >=(T left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, Comparer<T>.Default.Compare(left, right.value) >= 0 && right.isValid);
+    }
+    public static ChainCompare<T> operator <(T left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, Comparer<T>.Default.Compare(left, right.value) < 0 && right.isValid);
+    }
+    public static ChainCompare<T> operator >(T left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, Comparer<T>.Default.Compare(left, right.value) < 0 && right.isValid);
+    }
+
+    public static ChainCompare<T> operator ==(ChainCompare<T> left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, left.isValid && EqualityComparer<T>.Default.Equals(left.value, right.value));
+    }
+    public static ChainCompare<T> operator !=(ChainCompare<T> left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, left.isValid && !EqualityComparer<T>.Default.Equals(left.value, right.value));
+    }
+    public static ChainCompare<T> operator <=(ChainCompare<T> left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, left.isValid && Comparer<T>.Default.Compare(left.value, right.value) <= 0);
+    }
+    public static ChainCompare<T> operator >=(ChainCompare<T> left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, left.isValid && Comparer<T>.Default.Compare(left.value, right.value) >= 0);
+    }
+    public static ChainCompare<T> operator <(ChainCompare<T> left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, left.isValid && Comparer<T>.Default.Compare(left.value, right.value) < 0);
+    }
+    public static ChainCompare<T> operator >(ChainCompare<T> left, ChainCompare<T> right)
+    {
+        return new ChainCompare<T>(right.value, left.isValid && Comparer<T>.Default.Compare(left.value, right.value) > 0);
+    }
+
+    public static implicit operator bool(ChainCompare<T> left)
+    {
+        return left.isValid;
+    }
+
+    public override bool Equals(object obj)
+    {
+        return (obj is ChainCompare<T> compare &&
+               EqualityComparer<T>.Default.Equals(value, compare.value)) ||
+               (obj is T rawCompare &&
+               EqualityComparer<T>.Default.Equals(value, rawCompare));
+    }
+
+    public override int GetHashCode()
+    {
+        return value.GetHashCode();
+    }
+};
 
 public class GameState : MonoBehaviour
 {
@@ -47,12 +159,6 @@ public class GameState : MonoBehaviour
         instance = this;
     }
 
-    private void Start()
-    {
-        RegisterPieces();
-        RestartGame();
-    }
-
     private void Update()
     {
         //TrackMouse();
@@ -76,20 +182,24 @@ public class GameState : MonoBehaviour
         return GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos);
     }
 
-    void RegisterPieces()
+    public void Initialize(ChessPiece[] playerOnePieces, ChessPiece[] playerTwoPieces)
     {
-        foreach(ChessPiece piece in playerOnePieces)
-        {
-            gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 0);
-        }
-        foreach(ChessPiece piece in playerTwoPieces)
-        {
-            gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 1);
-        }
+        this.playerOnePieces = playerOnePieces;
+        this.playerTwoPieces = playerTwoPieces;
+        //this.soccerBall = soccerBallPiece;
+        //foreach(ChessPiece piece in playerOnePieces)
+        //{
+        //    gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 0);
+        //}
+        //foreach(ChessPiece piece in playerTwoPieces)
+        //{
+        //    gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 1);
+        //}
 
         //gameBoard.RegisterPiece(soccerPiece, GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position), 2);
         soccerBall.initialPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, soccerBall.transform.position);
         soccerBall.transform.position = (Vector3) GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition) - new Vector3(0, 0, 9);
+        RestartGame();
     }
 
     void ResetBoard()
