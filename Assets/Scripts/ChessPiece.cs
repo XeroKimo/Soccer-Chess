@@ -1,7 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public enum ChessType
 {
@@ -10,51 +12,45 @@ public enum ChessType
     Rook,
     Queen,
     King,
+    Ball
 }
 
-public struct EnumeratePositionOutput
+public class ChessPiece : MonoBehaviour
 {
-    public Vector2Int position;
-    public BoardPiece occupiedPiece;
-    public bool blocked;
-};
-
-public class ChessPiece : BoardPiece
-{
-    public delegate bool MoveRestriction(ChessPiece piece, GameBoard boardState, Vector2Int position);
-
     public ChessType type;
-    private MoveRestriction CanMoveDelegate;
+    public PlacedPiece? placedData;
 
-    private delegate IEnumerable<EnumeratePositionOutput> EnumeratePositions(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction);
-    private EnumeratePositions EnumeratePositionsDelegate;
+    public Vector2Int position => placedData.Value.position;
+    public GameBoard board => placedData.Value.board;
 
-    // Start is called before the first frame update
-    void Start()
+    public byte team;
+    public Vector2 gizmoSquareSize;
+
+    private SpriteRenderer spriteRenderer;
+
+    void Awake()
     {
-        switch(type)
-        {
-        case ChessType.Knight:
-            CanMoveDelegate = CanMoveKnight;
-            EnumeratePositionsDelegate = KnightEnumeration;
-            break;
-        case ChessType.Bishop:
-            CanMoveDelegate = CanMoveBishop;
-                EnumeratePositionsDelegate = BishopEnumeration;
-                break;
-        case ChessType.Rook:
-            CanMoveDelegate = CanMoveRook;
-                EnumeratePositionsDelegate = RookEnumeration;
-                break;
-        case ChessType.Queen:
-            CanMoveDelegate = CanMoveQueen;
-                EnumeratePositionsDelegate = QueenEnumeration;
-                break;
-        case ChessType.King:
-            CanMoveDelegate = CanMoveKing;
-                EnumeratePositionsDelegate = KingEnumeration;
-                break;
-        }
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+    }
+
+    public Color GetOutlineColor()
+    {
+        return spriteRenderer.material.GetColor("_OutlineColor");
+    }
+    public void EnableOutline(float width = 0.03f)
+    {
+        spriteRenderer.material.SetFloat("_OutlineWidth", Mathf.Max(width, 0.01f));
+    }
+    public void EnableOutline(Color color, float width = 0.03f)
+    {
+        spriteRenderer.material.SetColor("_OutlineColor", color);
+        spriteRenderer.material.SetFloat("_OutlineWidth", Mathf.Max(width, 0.01f));
+    }
+
+    public void DisableOutline()
+    {
+        spriteRenderer.material.SetColor("_OutlineColor", Color.black);
+        spriteRenderer.material.SetFloat("_OutlineWidth", 0);
     }
 
     // Update is called once per frame
@@ -63,14 +59,33 @@ public class ChessPiece : BoardPiece
 
     }
 
-    public bool CanMove(GameBoard boardState, Vector2Int position)
+    public bool CanMove(Vector2Int position)
     {
-        return CanMoveDelegate(this, boardState, position);
+        return type switch
+        {
+            ChessType.Knight => CanMoveKnight(placedData.Value.position, position),
+            ChessType.Rook => CanMoveRook(placedData.Value.position, position),
+            ChessType.Bishop => CanMoveBishop(placedData.Value.position, position),
+            ChessType.Queen => CanMoveQueen(placedData.Value.position, position),
+            ChessType.King => CanMoveKing(placedData.Value.position, position),
+            ChessType.Ball => true,
+            _ => throw new System.Exception("Unhandled type")
+        };
     }
 
-    public IEnumerable<EnumeratePositionOutput> GetValidPositions(GameBoard boardState, bool skipBlocked, Vector2Int? direction = null)
+    public IEnumerable<(Vector2Int, bool)> GetValidPositions(bool skipBlocked, Vector2Int? direction = null)
     {
-        return EnumeratePositionsDelegate(this, boardState, skipBlocked, direction);
+        return type switch
+        {
+            ChessType.Knight => KnightEnumeration(placedData.Value.position, placedData.Value.board, skipBlocked, direction),
+            ChessType.Rook => StraightEnumeration(placedData.Value.position, placedData.Value.board, skipBlocked, direction, null),
+            ChessType.Bishop => DiagonalEnumeration(placedData.Value.position, placedData.Value.board, skipBlocked, direction, null),
+            ChessType.Queen => StraightEnumeration(placedData.Value.position, placedData.Value.board, skipBlocked, direction, null)
+                .Concat(DiagonalEnumeration(placedData.Value.position, placedData.Value.board, skipBlocked, direction, null)),
+            ChessType.King => StraightEnumeration(placedData.Value.position, placedData.Value.board, skipBlocked, direction, 1)
+                .Concat(DiagonalEnumeration(placedData.Value.position, placedData.Value.board, skipBlocked, direction, 1)),
+            _ => default
+        };
     }
 
     private void OnDrawGizmos()
@@ -104,9 +119,9 @@ public class ChessPiece : BoardPiece
         Gizmos.DrawCube(transform.position, gizmoSquareSize);
     }
 
-    public static bool CanMoveKnight(ChessPiece piece, GameBoard boardState, Vector2Int position)
+    public static bool CanMoveKnight(Vector2Int currentPosition, Vector2Int position)
     {
-        Vector2Int positionDiff = position - piece.position;
+        Vector2Int positionDiff = position - currentPosition;
 
         positionDiff.x = Mathf.Abs(positionDiff.x);
         positionDiff.y = Mathf.Abs(positionDiff.y);
@@ -114,9 +129,9 @@ public class ChessPiece : BoardPiece
         return (positionDiff.x == 1 && positionDiff.y == 2) ||
             (positionDiff.x == 2 && positionDiff.y == 1);
     }
-    public static bool CanMoveBishop(ChessPiece piece, GameBoard boardState, Vector2Int position)
+    public static bool CanMoveBishop(Vector2Int currentPosition, Vector2Int position)
     {
-        Vector2Int positionDiff = position - piece.position;
+        Vector2Int positionDiff = position - currentPosition;
 
         positionDiff.x = Mathf.Abs(positionDiff.x);
         positionDiff.y = Mathf.Abs(positionDiff.y);
@@ -124,21 +139,21 @@ public class ChessPiece : BoardPiece
         return positionDiff.x == positionDiff.y;
     }
 
-    public static bool CanMoveRook(ChessPiece piece, GameBoard boardState, Vector2Int position)
+    public static bool CanMoveRook(Vector2Int currentPosition, Vector2Int position)
     {
-        Vector2Int positionDiff = position - piece.position;
+        Vector2Int positionDiff = position - currentPosition;
 
         return positionDiff.x == 0 || positionDiff.y == 0;
     }
 
-    public static bool CanMoveQueen(ChessPiece piece, GameBoard boardState, Vector2Int position)
+    public static bool CanMoveQueen(Vector2Int currentPosition, Vector2Int position)
     {
-        return CanMoveRook(piece, boardState, position) || CanMoveBishop(piece, boardState, position);
+        return CanMoveRook(currentPosition, position) || CanMoveBishop(currentPosition, position);
     }
 
-    public static bool CanMoveKing(ChessPiece piece, GameBoard boardState, Vector2Int position)
+    public static bool CanMoveKing(Vector2Int currentPosition, Vector2Int position)
     {
-        Vector2Int positionDiff = position - piece.position;
+        Vector2Int positionDiff = position - currentPosition;
 
         positionDiff.x = Mathf.Abs(positionDiff.x);
         positionDiff.y = Mathf.Abs(positionDiff.y);
@@ -146,16 +161,16 @@ public class ChessPiece : BoardPiece
 
         return positionDiff.x < 2 && positionDiff.y < 2; //&& CanMoveQueen(piece, boardState, position);
     }
-    private static IEnumerable<EnumeratePositionOutput> LinearEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int direction, int? maxDistance)
+    private static IEnumerable<(Vector2Int, bool)> LinearEnumeration(Vector2Int currentPosition, GameBoard boardState, bool skipBlocked, Vector2Int direction, int? maxDistance)
     {
         maxDistance = maxDistance ?? int.MaxValue;
-        Vector2Int position = piece.position + direction;
+        Vector2Int position = currentPosition + direction;
         bool blocked = false;
         int distance = 0;
-        while (boardState.IsInBoardRange(position) && distance < maxDistance.Value)
+        while (boardState.InRange(position) && distance < maxDistance.Value)
         {
-            BoardPiece occupiedPiece = boardState.GetBoardPieceAt(position);
-            yield return new EnumeratePositionOutput { position = position, occupiedPiece = occupiedPiece, blocked = blocked};
+            ChessPiece occupiedPiece = boardState.GetPiece(position);
+            yield return (position, blocked);
             if (occupiedPiece && skipBlocked)
                 break;
 
@@ -166,7 +181,7 @@ public class ChessPiece : BoardPiece
         yield break;
     }
 
-    private static IEnumerable<EnumeratePositionOutput> StraightEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction, int? maxDistance)
+    private static IEnumerable<(Vector2Int, bool)> StraightEnumeration(Vector2Int currentPosition, GameBoard boardState, bool skipBlocked, Vector2Int? direction, int? maxDistance)
     {
         Vector2Int[] directions =
         {
@@ -176,24 +191,19 @@ public class ChessPiece : BoardPiece
             new Vector2Int(-1, 0),
         };
 
-        if (direction.HasValue && directions.Contains(direction.Value))
+        if (direction.HasValue)
         {
-            foreach (var v in LinearEnumeration(piece, boardState, skipBlocked, direction.Value, maxDistance))
-            {
-                yield return v;
-            }
+            return directions.Contains(direction.Value)
+                ? LinearEnumeration(currentPosition, boardState, skipBlocked, direction.Value, maxDistance)
+                : LinearEnumeration(currentPosition, boardState, skipBlocked, direction.Value, 0);
         }
         else
         {
-            foreach (var v in directions.SelectMany(dir => LinearEnumeration(piece, boardState, skipBlocked, dir, maxDistance)))
-            {
-                yield return v;
-            }
+            return directions.SelectMany(dir => LinearEnumeration(currentPosition, boardState, skipBlocked, dir, maxDistance));
         }
-        yield break;
     }
 
-    private static IEnumerable<EnumeratePositionOutput> DiagonalEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction, int? maxDistance)
+    private static IEnumerable<(Vector2Int, bool)> DiagonalEnumeration(Vector2Int currentPosition, GameBoard boardState, bool skipBlocked, Vector2Int? direction, int? maxDistance)
     {
         Vector2Int[] directions =
         {
@@ -203,57 +213,18 @@ public class ChessPiece : BoardPiece
             new Vector2Int(-1, -1),
         };
 
-        if (direction.HasValue && directions.Contains(direction.Value))
+        if (direction.HasValue)
         {
-            foreach (var v in LinearEnumeration(piece, boardState, skipBlocked, direction.Value, maxDistance))
-            {
-                yield return v;
-            }
+            return directions.Contains(direction.Value)
+                ? LinearEnumeration(currentPosition, boardState, skipBlocked, direction.Value, maxDistance)
+                : LinearEnumeration(currentPosition, boardState, skipBlocked, direction.Value, 0);
         }
         else
         {
-            foreach (var v in directions.SelectMany(dir => LinearEnumeration(piece, boardState, skipBlocked, dir, maxDistance)))
-            {
-                yield return v;
-            }
-        }
-        yield break;
-    }
-
-    private static IEnumerable<EnumeratePositionOutput> BishopEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction)
-    {
-        foreach(var v in DiagonalEnumeration(piece, boardState, skipBlocked, direction, null))
-            yield return v;
-        yield break;
-    }
-
-    private static IEnumerable<EnumeratePositionOutput> RookEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction)
-    {
-        foreach (var v in StraightEnumeration(piece, boardState, skipBlocked, direction, null))
-            yield return v;
-        yield break;
-    }
-
-    private static IEnumerable<EnumeratePositionOutput> QueenEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction)
-    {
-        foreach (var v in DiagonalEnumeration(piece, boardState, skipBlocked, direction, null)
-            .Concat(StraightEnumeration(piece, boardState, skipBlocked, direction, null)))
-        {
-            yield return v;
-        }
-        yield break;
-    }
-
-    private static IEnumerable<EnumeratePositionOutput> KingEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction)
-    {
-        foreach (var v in DiagonalEnumeration(piece, boardState, skipBlocked, direction, 1)
-            .Concat(StraightEnumeration(piece, boardState, skipBlocked, direction, 1)))
-        {
-            yield return v;
+            return directions.SelectMany(dir => LinearEnumeration(currentPosition, boardState, skipBlocked, dir, maxDistance));
         }
     }
-
-    private static IEnumerable<EnumeratePositionOutput> KnightEnumeration(ChessPiece piece, GameBoard boardState, bool skipBlocked, Vector2Int? direction)
+    private static IEnumerable<(Vector2Int, bool)> KnightEnumeration(Vector2Int currentPosition, GameBoard boardState, bool skipBlocked, Vector2Int? direction)
     {
         Vector2Int[] offsets = 
         { 
@@ -269,13 +240,12 @@ public class ChessPiece : BoardPiece
 
         foreach (var offset in offsets)
         {
-            Vector2Int position = piece.position + offset;
-            if (boardState.IsInBoardRange(position))
+            Vector2Int position = currentPosition + offset;
+            if (boardState.InRange(position))
             {
-                BoardPiece occupiedPiece = boardState.GetBoardPieceAt(position);
-                yield return new EnumeratePositionOutput { position = position, occupiedPiece = occupiedPiece, blocked = occupiedPiece };
+                ChessPiece occupiedPiece = boardState.GetPiece(position);
+                yield return (position, occupiedPiece);
             }
         }
-        yield break;
     }
 }

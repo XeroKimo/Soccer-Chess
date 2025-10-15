@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-struct BoardCell
+public struct PlacedPiece
 {
     public Vector2Int position;
-    public BoardPiece piece;
+    public GameBoard board;
 }
 
 public class GameBoard : MonoBehaviour
@@ -17,139 +17,116 @@ public class GameBoard : MonoBehaviour
     [SerializeField]
     Vector2 m_cellSize = new Vector2(1, 1);
 
-    BoardCell[,] m_boardCells;
+    ChessPiece[,] m_cells;
 
-    List<BoardPiece> m_boardPieces = new List<BoardPiece>(PieceCount);
-
-
-    public Vector2Int boardSize { get => m_boardSize; }
-    public Vector2 cellSize { get => m_cellSize; }
-    public List<BoardPiece> boardPieces { get => m_boardPieces; }
+    public Vector2Int boardSize => m_boardSize;
+    public Vector2 cellSize => m_cellSize;
 
     private void Awake()
     {
-        m_boardCells = new BoardCell[boardSize.y, boardSize.x];
-        for(int y = 0; y < boardSize.y; y++)
-        {
-            for(int x = 0; x < boardSize.x; x++)
-            {
-                m_boardCells[y, x].position = new Vector2Int(x, y);
-            }
-        }
-    }
-
-    // Start is called before the first frame update
-    void Start()
-    {
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        m_cells = new ChessPiece[boardSize.y, boardSize.x];
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
 
-        for(int y = 0; y < boardSize.y; y++)
+        for (int y = 0; y < boardSize.y; y++)
         {
-            for(int x = 0; x < boardSize.x; x++)
+            for (int x = 0; x < boardSize.x; x++)
             {
-                Gizmos.DrawWireCube(BoardPositionToWorldPosition(this, new Vector2Int(x, y)), cellSize);
+                Gizmos.DrawWireCube(CellPositionToWorldCenterPosition(new Vector2Int(x, y)), cellSize);
             }
         }
 
         Gizmos.color = Color.white;
     }
 
-    public bool MovePiece(BoardPiece piece, Vector2Int newPosition)
+    public ChessPiece PlacePiece(ChessPiece piece, Vector2Int position)
     {
-        if(IsPositionOccupied(newPosition))
-            return false;
+        if (GetPiece(position))
+            throw new System.Exception($"Cell {position} is already occupied");
+        if (piece.placedData.HasValue)
+            throw new System.Exception($"{piece.name} is already placed on board { piece.placedData.Value.board }");
 
-        m_boardCells[piece.position.y, piece.position.x].piece = null;
-
-        piece.position = newPosition;
-
-        m_boardCells[piece.position.y, piece.position.x].piece = piece;
-        return true;
-    }
-
-    public BoardPiece RegisterPiece(BoardPiece piece, Vector2Int position, byte team)
-    {
-        Debug.Assert(IsInBoardRange(position), piece.name + ": Position is not within the board's range", piece);
-        Debug.Assert(!IsPositionOccupied(position), piece.name + ": Positon already occupied", piece);
-
-        m_boardPieces.Add(piece);
-
-
-        piece.position = position;
-        piece.initialPosition = position;
-        piece.gizmoSquareSize = cellSize;
-        piece.transform.position = BoardPositionToWorldPosition(this, piece.position);
-        piece.team = team;
-
-        m_boardCells[position.y, position.x].piece = piece;
+        SetPiece(piece, position);
+        piece.placedData = new PlacedPiece { position = position, board = this };
 
         return piece;
     }
 
-    public void PlacePiece(BoardPiece piece, Vector2Int position)
+    public ChessPiece RemovePiece(Vector2Int position)
     {
-        Debug.Assert(!IsPositionOccupied(position));
+        ChessPiece piece = GetPiece(position);
 
-        piece.position = position;
-        piece.transform.position = (Vector3)BoardPositionToWorldPosition(this, piece.position) - new Vector3(0, 0, boardSize.y - position.y);
-        m_boardCells[position.y, position.x].piece = piece;
-        //piece.gameObject.SetActive(true);
+        return piece ? RemovePiece(piece) : piece;
     }
 
-    public void RemovePiece(BoardPiece piece)
+    public ChessPiece RemovePiece(ChessPiece selectedPiece)
     {
-        //piece.gameObject.SetActive(false);
-        m_boardCells[piece.position.y, piece.position.x].piece = null;
+        Debug.Assert(selectedPiece != null && selectedPiece.placedData.HasValue && selectedPiece.placedData.Value.board == this);
+        SetPiece(null, selectedPiece.placedData.Value.position);
+        selectedPiece.placedData = null;
+        return selectedPiece;
     }
 
-    public BoardPiece GetBoardPieceAt(Vector2Int position)
+    //Returns the old piece that occupied newPosition
+    public ChessPiece MovePiece(ChessPiece selectedPiece, Vector2Int newPosition)
     {
-        if(!IsInBoardRange(position))
-            return null;
+        Debug.Assert(selectedPiece != null && selectedPiece.placedData.HasValue && selectedPiece.placedData.Value.board == this);
 
-        return m_boardCells[position.y, position.x].piece;
+        ChessPiece removedPiece = RemovePiece(newPosition);
+        PlacePiece(RemovePiece(selectedPiece), newPosition);
+
+        return removedPiece;
+
     }
 
-    public bool IsPositionOccupied(Vector2Int position)
+    //Returns the old piece that occupied newPosition
+    public ChessPiece MovePiece(Vector2Int selectedPiece, Vector2Int newPosition)
     {
-        return GetBoardPieceAt(position) != null;
+        return MovePiece(GetPiece(selectedPiece), newPosition);
     }
 
-    public bool IsInBoardRange(Vector2Int position)
+    public ChessPiece GetPiece(Vector2Int position)
+    {
+        return m_cells[position.y, position.x];
+    }
+
+    public bool InRange(Vector2Int position)
     {
         return new ChainCompare<int>(0) <= position.x < boardSize.x
             && new ChainCompare<int>(0) <= position.y < boardSize.y;
     }
 
-    public static Vector2 BoardPositionToWorldPosition(GameBoard board, Vector2Int position)
+    public bool IsOccupied(Vector2Int position)
     {
-        Vector3 startingPos = board.transform.position -new Vector3(board.boardSize.x * board.cellSize.x , board.boardSize.y * board.cellSize.y, 0) / 2;
-        Vector3 cellCentreOffset = new Vector3(board.cellSize.x, board.cellSize.y) / 2;
-        Vector3 cellOffset = new Vector3(position.x * board.cellSize.x, position.y * board.cellSize.y, 0);
-
-        return startingPos + cellOffset + cellCentreOffset;
+        return GetPiece(position);
     }
 
-    public static Vector2Int WorldPositionToBoardPosition(GameBoard board, Vector2 position)
+    private ChessPiece SetPiece(ChessPiece piece, Vector2Int position)
     {
-        Vector2 startingPos = board.transform.position -new Vector3(board.boardSize.x * board.cellSize.x, board.boardSize.y * board.cellSize.y) / 2;
+        return m_cells[position.y, position.x] = piece;
+    }
 
-        Vector2 boardPosition = position - startingPos;
+    public Vector2Int WorldPositionToCellPosition(Vector3 position)
+    {
+        Vector3 startingPos = transform.position - new Vector3(boardSize.x * m_cellSize.x, boardSize.y * m_cellSize.y) / 2;
 
-        Vector2Int cellOffset = new Vector2Int((int)(boardPosition.x / board.cellSize.x), (int)(boardPosition.y / board.cellSize.y));
+        Vector3 localCellOffset = position - startingPos;
 
+        Vector2Int selectedCell = new Vector2Int((int)(localCellOffset.x / m_cellSize.x), (int)(localCellOffset.y / m_cellSize.y));
 
-        return cellOffset;
+        return selectedCell;
+    }
+
+    public Vector3 CellPositionToWorldCenterPosition(Vector2Int position)
+    {
+        Vector3 startingPos = transform.position - new Vector3(boardSize.x * m_cellSize.x, boardSize.y * m_cellSize.y, 0) / 2;
+        Vector3 cellCentreOffset = new Vector3(m_cellSize.x, m_cellSize.y) / 2;
+        Vector3 selectedCellOffset = new Vector3(position.x * m_cellSize.x, position.y * m_cellSize.y, 0);
+
+        return startingPos + selectedCellOffset + cellCentreOffset;
     }
 
 }

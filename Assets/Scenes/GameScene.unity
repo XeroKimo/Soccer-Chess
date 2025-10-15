@@ -440,18 +440,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 51605186}
   m_CullTransparentMesh: 0
---- !u!114 &59939752 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 867190684095867340, guid: 779a5750b117ac0478988d0b04e29942,
-    type: 3}
-  m_PrefabInstance: {fileID: 2568386901071820910}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0db3b1001b59b9446a8da15ac148f506, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &71539620 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 32287703717621089, guid: fe40507c650ca214ab0406f69d35a7dc,
@@ -5017,6 +5005,18 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+--- !u!114 &1025504224 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7323833426019232202, guid: 779a5750b117ac0478988d0b04e29942,
+    type: 3}
+  m_PrefabInstance: {fileID: 2568386901071820910}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a5ca96066410f5b4bb281a7d121d71cc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1041468617
 GameObject:
   m_ObjectHideFlags: 0
@@ -23292,7 +23292,7 @@ MonoBehaviour:
   - {fileID: 0}
   playerOneField: {fileID: 2814134}
   playerTwoField: {fileID: 1984792675}
-  soccerBall: {fileID: 59939752}
+  soccerBall: {fileID: 1025504224}
   WinParticleObject: {fileID: 9193572418581324109, guid: 8d20e0dcd900f7040bad9aa334099c3d,
     type: 3}
   blueScoreText: {fileID: 828742159}

@@ -139,7 +139,7 @@ public class GameState : MonoBehaviour
     public CapturedField playerOneField;
     public CapturedField playerTwoField;
 
-    public SoccerPiece soccerBall;
+    public ChessPiece soccerBall;
 
     public GameObject WinParticleObject;
 
@@ -180,7 +180,7 @@ public class GameState : MonoBehaviour
         Vector3 worldMousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
         //Convert the world space mouse position to a board position
-        return GameBoard.WorldPositionToBoardPosition(gameBoard, worldMousePos);
+        return gameBoard.WorldPositionToCellPosition(worldMousePos);
     }
 
     public void Initialize(ChessPiece[] playerOnePieces, ChessPiece[] playerTwoPieces)
@@ -190,16 +190,16 @@ public class GameState : MonoBehaviour
         //this.soccerBall = soccerBallPiece;
         //foreach(ChessPiece piece in playerOnePieces)
         //{
-        //    gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 0);
+        //    gameBoard.RegisterPiece(piece, gameBoard.WorldPositionToCellPosition(piece.transform.position), 0);
         //}
         //foreach(ChessPiece piece in playerTwoPieces)
         //{
-        //    gameBoard.RegisterPiece(piece, GameBoard.WorldPositionToBoardPosition(gameBoard, piece.transform.position), 1);
+        //    gameBoard.RegisterPiece(piece, gameBoard.WorldPositionToCellPosition(piece.transform.position), 1);
         //}
 
-        //gameBoard.RegisterPiece(soccerPiece, GameBoard.WorldPositionToBoardPosition(gameBoard, soccerPiece.transform.position), 2);
-        soccerBall.initialPosition = GameBoard.WorldPositionToBoardPosition(gameBoard, soccerBall.transform.position);
-        soccerBall.transform.position = (Vector3) GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition) - new Vector3(0, 0, 9);
+        //gameBoard.RegisterPiece(soccerPiece, gameBoard.WorldPositionToCellPosition(soccerPiece.transform.position), 2);
+        gameBoard.PlacePiece(soccerBall, gameBoard.boardSize / 2);
+        soccerBall.transform.position = gameBoard.CellPositionToWorldCenterPosition(soccerBall.position) - new Vector3(0, 0, 9);
         RestartGame();
     }
 
@@ -207,27 +207,45 @@ public class GameState : MonoBehaviour
     {
         foreach(ChessPiece piece in playerOnePieces)
         {
-            gameBoard.RemovePiece(piece);
+            if(piece.placedData.HasValue)
+                gameBoard.RemovePiece(piece);
         }
         foreach(ChessPiece piece in playerTwoPieces)
         {
-            gameBoard.RemovePiece(piece);
+            if (piece.placedData.HasValue)
+                gameBoard.RemovePiece(piece);
         }
 
+        gameBoard.PlacePiece(playerOnePieces[0], new Vector2Int(1, 1));
+        gameBoard.PlacePiece(playerOnePieces[1], new Vector2Int(1, 2));
+        gameBoard.PlacePiece(playerOnePieces[2], new Vector2Int(1, 3));
+        gameBoard.PlacePiece(playerOnePieces[3], new Vector2Int(1, 4));
+        gameBoard.PlacePiece(playerOnePieces[4], new Vector2Int(1, 5));
+        gameBoard.PlacePiece(playerOnePieces[5], new Vector2Int(2, 5));
+        gameBoard.PlacePiece(playerOnePieces[6], new Vector2Int(2, 2));
 
-        foreach(ChessPiece piece in playerOnePieces)
+        gameBoard.PlacePiece(playerTwoPieces[0], new Vector2Int(10 - 1, 5));
+        gameBoard.PlacePiece(playerTwoPieces[1], new Vector2Int(10 - 1, 4));
+        gameBoard.PlacePiece(playerTwoPieces[2], new Vector2Int(10 - 1, 3));
+        gameBoard.PlacePiece(playerTwoPieces[3], new Vector2Int(10 - 1, 2));
+        gameBoard.PlacePiece(playerTwoPieces[4], new Vector2Int(10 - 1, 1));
+        gameBoard.PlacePiece(playerTwoPieces[5], new Vector2Int(10 - 2, 1));
+        gameBoard.PlacePiece(playerTwoPieces[6], new Vector2Int(10 - 2, 4));
+        foreach (ChessPiece piece in playerOnePieces)
         {
-            gameBoard.PlacePiece(piece, piece.initialPosition);
+            piece.transform.position = gameBoard.CellPositionToWorldCenterPosition(piece.position);
+            //gameBoard.PlacePiece(piece, piece.initialPosition);
         }
         foreach(ChessPiece piece in playerTwoPieces)
         {
-            gameBoard.PlacePiece(piece, piece.initialPosition);
+            piece.transform.position = gameBoard.CellPositionToWorldCenterPosition(piece.position);
+            //gameBoard.PlacePiece(piece, piece.initialPosition);
         }
 
         playerOneField.ClearField();
         playerTwoField.ClearField();
 
-        soccerBall.transform.position = (Vector3)GameBoard.BoardPositionToWorldPosition(gameBoard, soccerBall.initialPosition) - new Vector3(0, 0, 9);
+        soccerBall.transform.position = gameBoard.CellPositionToWorldCenterPosition(gameBoard.boardSize / 2) - new Vector3(0, 0, 9);
     }
 
     private void OnDrawGizmos()
@@ -235,7 +253,7 @@ public class GameState : MonoBehaviour
         Gizmos.color = Color.blue;
 
         if(selectedPiece)
-            Gizmos.DrawCube(GameBoard.BoardPositionToWorldPosition(gameBoard, selectedPiece.position), gameBoard.cellSize);
+            Gizmos.DrawCube(gameBoard.CellPositionToWorldCenterPosition(selectedPiece.position), gameBoard.cellSize);
     }
 
     public bool ValidPlayerPosition(Vector2Int targetPos)
@@ -265,7 +283,7 @@ public class GameState : MonoBehaviour
     public void HandleGoal()
     {
 
-        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameBoard, soccerBall.transform.position);
+        Vector2Int ballBoardPos = gameBoard.WorldPositionToCellPosition(soccerBall.transform.position);
         if(ballBoardPos.x == gameBoard.boardSize.x - 1)
         {
             Debug.Log("Player One Scored");
@@ -379,41 +397,48 @@ class PlayerMoveInputState : GameSubState
 
     void TrackMouse()
     {
-        ChessPiece piece = gameState.gameBoard.GetBoardPieceAt(gameState.RaycastToBoardPosition()) as ChessPiece;
-
-        if(piece)
+        try
         {
-            if(piece.team != gameState.currentPlayerTurn)
-                return;
+            ChessPiece piece = gameState.gameBoard.GetPiece(gameState.RaycastToBoardPosition()) as ChessPiece;
 
-            if(m_overlappedPiece == null && piece != m_selectedPiece)
+            if (piece)
             {
-                m_overlappedPiece = piece;
-                m_overlappedPiece.EnableOutline(overlap);
-            }
-            else if(piece != m_selectedPiece)
-            {
-                m_overlappedPiece.DisableOutline();
+                if (piece.team != gameState.currentPlayerTurn)
+                    return;
 
-                m_overlappedPiece = piece;
-                m_overlappedPiece.EnableOutline(overlap);
+                if (m_overlappedPiece == null && piece != m_selectedPiece)
+                {
+                    m_overlappedPiece = piece;
+                    m_overlappedPiece.EnableOutline(overlap);
+                }
+                else if (piece != m_selectedPiece)
+                {
+                    m_overlappedPiece.DisableOutline();
+
+                    m_overlappedPiece = piece;
+                    m_overlappedPiece.EnableOutline(overlap);
+                }
+                else
+                {
+                    if (m_overlappedPiece)
+                    {
+                        m_overlappedPiece.DisableOutline();
+                        m_overlappedPiece = null;
+                    }
+                }
             }
             else
             {
-                if(m_overlappedPiece)
+                if (m_overlappedPiece)
                 {
                     m_overlappedPiece.DisableOutline();
                     m_overlappedPiece = null;
                 }
             }
         }
-        else
+        catch (Exception e)
         {
-            if(m_overlappedPiece)
-            {
-                m_overlappedPiece.DisableOutline();
-                m_overlappedPiece = null;
-            }
+
         }
     }
 
@@ -438,12 +463,12 @@ class PlayerMoveInputState : GameSubState
             if(gameState.ValidPlayerPosition(selectedBoardPosition))
             {
                 //if the move is invalid, or have selected our current position, do nothing and deselect our selected piece
-                if(m_selectedPiece.position != selectedBoardPosition && m_selectedPiece.CanMove(gameState.gameBoard, selectedBoardPosition))
+                if(m_selectedPiece.position != selectedBoardPosition && m_selectedPiece.CanMove(selectedBoardPosition))
                 {
                     Vector2Int direction = selectedBoardPosition - m_selectedPiece.position;
                     direction.Clamp(new Vector2Int(-1, -1), new Vector2Int(1, 1));
-                    List<BoardPiece> collidedPieces = m_selectedPiece.GetValidPositions(gameState.gameBoard, true, direction).
-                        Select(p => p.occupiedPiece).
+                    List<ChessPiece> collidedPieces = m_selectedPiece.GetValidPositions(true, direction).
+                        Select(p => gameState.gameBoard.GetPiece(p.Item1)).
                         Where(p => p && p.position == selectedBoardPosition).ToList();
 
                     if(collidedPieces.Count == 0
@@ -480,14 +505,15 @@ class PlayerMoveInputState : GameSubState
 
         int tileDisplayIndex = 0;
         MovementIndicators indicators = gameState.movementIndicators;
-        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
-        foreach (EnumeratePositionOutput position in m_selectedPiece.GetValidPositions(gameState.gameBoard, true).Where(p => gameState.ValidPlayerPosition(p.position)))
+        Vector2Int ballBoardPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
+        foreach (var (position, blocked) in m_selectedPiece.GetValidPositions(true).Where(p => gameState.ValidPlayerPosition(p.Item1)))
         {
-            indicators.tiles[tileDisplayIndex].enabled = !position.occupiedPiece || position.occupiedPiece.team != m_selectedPiece.team;
-            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, position.position);
-            if(position.occupiedPiece)
+            ChessPiece piece = gameState.gameBoard.GetPiece(position);
+            indicators.tiles[tileDisplayIndex].enabled = !piece || piece.team != m_selectedPiece.team;
+            indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(position);
+            if(piece)
                 indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
-            else if (position.position == ballBoardPos)
+            else if (position == ballBoardPos)
                 indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
 
             tileDisplayIndex++;
@@ -524,7 +550,7 @@ class PlayerMoveState : GameSubState
         startingPos = m_possessingPiece.transform.position;
 
         gameState.movementIndicators.DeactivateAll();
-        m_targetWorldPos = (Vector3)GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos) - new Vector3(0, 0, gameState.gameBoard.boardSize.y - m_targetBoardPos.y);
+        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(targetBoardPos) - new Vector3(0, 0, gameState.gameBoard.boardSize.y - m_targetBoardPos.y);
     }
 
     public override void Update()
@@ -550,8 +576,8 @@ class PlayerMoveState : GameSubState
 
     void HandleMoveEnd()
     {
-        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
-        ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(m_targetBoardPos) as ChessPiece;
+        Vector2Int ballBoardPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
+        ChessPiece chessPiece = gameState.gameBoard.GetPiece(m_targetBoardPos) as ChessPiece;
 
         bool collidedWithBall = false;
         if(ballBoardPos == m_targetBoardPos)
@@ -625,9 +651,9 @@ class BallMoveInputState : GameSubState
     void HandleClick()
     {
         Vector2Int selectedBoardPosition = gameState.RaycastToBoardPosition();
-        if(m_selectedPiece.CanMove(gameState.gameBoard, selectedBoardPosition) && gameState.ValidBallPosition(selectedBoardPosition))
+        if(m_selectedPiece.CanMove(selectedBoardPosition) && gameState.ValidBallPosition(selectedBoardPosition))
         {
-            //List<BoardPiece> collidedPieces = m_selectedPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
+            //List<ChessPiece> collidedPieces = m_selectedPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
             m_selectedPiece.DisableOutline();
             gameState.currentSubState = new BallMoveState(m_selectedPiece, selectedBoardPosition);
 
@@ -650,11 +676,11 @@ class BallMoveInputState : GameSubState
 
         int tileDisplayIndex = 0;
         MovementIndicators indicators = gameState.movementIndicators;
-        Vector2Int ballBoardPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
-        foreach (EnumeratePositionOutput position in m_selectedPiece.GetValidPositions(gameState.gameBoard, false).Where(p => gameState.ValidPlayerPosition(p.position) || gameState.ValidBallPosition(p.position)))
+        Vector2Int ballBoardPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
+        foreach (var (position, occupied) in m_selectedPiece.GetValidPositions(false).Where(p => gameState.ValidPlayerPosition(p.Item1) || gameState.ValidBallPosition(p.Item1)))
         {
             indicators.tiles[tileDisplayIndex].enabled = true;
-            indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, position.position);
+            indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(position);
             tileDisplayIndex++;
         }
     }
@@ -674,7 +700,7 @@ class BallMoveState : GameSubState
         m_originalKicker = kicker;
         m_targetBoardPos = targetBoardPos;
 
-        m_targetWorldPos = (Vector3)GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, targetBoardPos) + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
+        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(targetBoardPos) + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
         startingPos = gameState.soccerBall.transform.position;
 
         gameState.movementIndicators.DeactivateAll();
@@ -693,8 +719,8 @@ class BallMoveState : GameSubState
 
         gameState.soccerBall.transform.position = Vector3.Lerp(startingPos, m_targetWorldPos, time);
 
-        Vector2Int currentBallPos = GameBoard.WorldPositionToBoardPosition(GameState.instance.gameBoard, gameState.soccerBall.transform.position);
-        ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(currentBallPos) as ChessPiece;
+        Vector2Int currentBallPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
+        ChessPiece chessPiece = gameState.gameBoard.GetPiece(currentBallPos) as ChessPiece;
 
         if(chessPiece)
         {
@@ -713,7 +739,7 @@ class BallMoveState : GameSubState
 
     void HandleMoveEnd()
     {
-        ChessPiece chessPiece = gameState.gameBoard.GetBoardPieceAt(m_targetBoardPos) as ChessPiece;
+        ChessPiece chessPiece = gameState.gameBoard.GetPiece(m_targetBoardPos) as ChessPiece;
 
         if(chessPiece)
         {
@@ -825,14 +851,14 @@ class ReturnPiecesState : GameSubState
     {
         Vector2Int selectedBoardPos = gameState.RaycastToBoardPosition();
 
-        Vector2Int soccerBallPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
+        Vector2Int soccerBallPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
 
         placedOnBall = selectedBoardPos == soccerBallPos;
         if(gameState.currentPlayerTurn == 0)
         {
             if(selectedBoardPos.x < 3 &&
                 gameState.ValidPlayerPosition(selectedBoardPos) &&
-                !gameState.gameBoard.IsPositionOccupied(selectedBoardPos))
+                !gameState.gameBoard.IsOccupied(selectedBoardPos))
             {
                 gameState.gameBoard.PlacePiece(returningPiece, selectedBoardPos);
                 gameState.playerOneField.ReleaseTarget(returningPiece);
@@ -844,7 +870,7 @@ class ReturnPiecesState : GameSubState
         {
             if(selectedBoardPos.x >= gameState.gameBoard.boardSize.x - 3
                 && gameState.ValidPlayerPosition(selectedBoardPos) &&
-                !gameState.gameBoard.IsPositionOccupied(selectedBoardPos))
+                !gameState.gameBoard.IsOccupied(selectedBoardPos))
             {
                 gameState.gameBoard.PlacePiece(returningPiece, selectedBoardPos);
                 gameState.playerTwoField.ReleaseTarget(returningPiece);
@@ -885,7 +911,7 @@ class ReturnPiecesState : GameSubState
         int tileDisplayIndex = 0;
         indicators.SetColor(Color.red - new Color(0, 0, 0, 1));
 
-        Vector2Int soccerBallPos = GameBoard.WorldPositionToBoardPosition(gameState.gameBoard, gameState.soccerBall.transform.position);
+        Vector2Int soccerBallPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
 
         if(gameState.currentPlayerTurn == 0)
         {
@@ -894,10 +920,10 @@ class ReturnPiecesState : GameSubState
                 for(int x = 0; x < 3; x++)
                 {
                     Vector2Int boardPos = new Vector2Int(x, y);
-                    if(gameState.ValidPlayerPosition(boardPos) && !gameState.gameBoard.IsPositionOccupied(boardPos))
+                    if(gameState.ValidPlayerPosition(boardPos) && !gameState.gameBoard.IsOccupied(boardPos))
                     {
                         indicators.tiles[tileDisplayIndex].enabled = true;
-                        indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
+                        indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(boardPos);
 
                         if(boardPos == soccerBallPos)
                             indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
@@ -914,10 +940,10 @@ class ReturnPiecesState : GameSubState
                 for(int x = boardSize.x - 3; x < boardSize.x; x++)
                 {
                     Vector2Int boardPos = new Vector2Int(x, y);
-                    if(gameState.ValidPlayerPosition(boardPos) && !gameState.gameBoard.IsPositionOccupied(boardPos))
+                    if(gameState.ValidPlayerPosition(boardPos) && !gameState.gameBoard.IsOccupied(boardPos))
                     {
                         indicators.tiles[tileDisplayIndex].enabled = true;
-                        indicators.tiles[tileDisplayIndex].transform.position = GameBoard.BoardPositionToWorldPosition(gameState.gameBoard, boardPos);
+                        indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(boardPos);
                         if(boardPos == soccerBallPos)
                             indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
 

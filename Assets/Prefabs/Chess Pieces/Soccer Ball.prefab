@@ -96,7 +96,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1121018882334184620}
-  - component: {fileID: 867190684095867340}
+  - component: {fileID: 7323833426019232202}
   m_Layer: 0
   m_Name: Soccer Ball
   m_TagString: Untagged
@@ -121,7 +121,7 @@ Transform:
   - {fileID: 4284307601746130089}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &867190684095867340
+--- !u!114 &7323833426019232202
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -130,13 +130,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 4362746245930707265}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0db3b1001b59b9446a8da15ac148f506, type: 3}
+  m_Script: {fileID: 11500000, guid: a5ca96066410f5b4bb281a7d121d71cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  initialPosition: {x: 0, y: 0}
-  position: {x: 0, y: 0}
-  team: 0
-  gizmoSquareSize: {x: 1, y: 1}
+  type: 5
+  team: 2
+  gizmoSquareSize: {x: 0, y: 0}
 --- !u!1001 &1687485529109356459
 PrefabInstance:
   m_ObjectHideFlags: 0
