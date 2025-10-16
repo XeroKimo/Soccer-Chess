@@ -154,8 +154,6 @@ public class GameState : MonoBehaviour
     public int playerOneScore { get; private set; }
     public int playerTwoScore { get; private set; }
 
-    public bool displayMoveIndicators = true;
-
     private void Awake()
     {
         instance = this;
@@ -344,12 +342,6 @@ public class GameState : MonoBehaviour
         redScoreText.text = playerTwoScore.ToString();
         currentSubState = new ReturnPiecesState();
     }
-
-    public void ToggleMoveIndicators()
-    {
-        displayMoveIndicators = !displayMoveIndicators;
-    }
-
 }
 
 public abstract class GameSubState
@@ -480,8 +472,6 @@ class PlayerMoveInputState : GameSubState
 
     void DisplayMoves()
     {
-        if(!gameState.displayMoveIndicators)
-            return;
         Color color = Color.white;
         color.a = 0.5f;
 
@@ -495,7 +485,7 @@ class PlayerMoveInputState : GameSubState
             ChessPiece piece = gameState.gameBoard.GetPiece(position);
             indicators.tiles[tileDisplayIndex].enabled = !piece || piece.team != m_selectedPiece.team;
             indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(position);
-            if(piece)
+            if(piece && piece.type != ChessType.Ball)
                 indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
             else if(position == gameState.soccerBall.position)
                 indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
@@ -590,65 +580,39 @@ class BallMoveInputState : GameSubState
     Color ballPossession = Color.blue;
 
     const float outlineWidth = 0.03f;
-    bool m_oldMoveDisplay;
+
+    List<(Vector2Int, bool)> validPositions;
     public BallMoveInputState(ChessPiece possessingPiece)
     {
         m_selectedPiece = possessingPiece;
 
         m_selectedPiece.EnableOutline(ballPossession, outlineWidth);
-
+        validPositions = m_selectedPiece.GetValidPositions(false).Where(p => gameState.ValidBallPosition(p.Item1)).ToList();
         DisplayMoves();
-
-        m_oldMoveDisplay = gameState.displayMoveIndicators;
     }
 
     public override void Update()
     {
-        if(Input.GetMouseButtonDown(0))
-            HandleClick();
-
-
-        if(m_oldMoveDisplay != gameState.displayMoveIndicators)
+        Vector2Int position = gameState.RaycastToBoardPosition();
+        if(Input.GetMouseButtonDown(0) && validPositions.Any(p => p.Item1 == position))
         {
-            if(gameState.displayMoveIndicators)
-                DisplayMoves();
-            else
-                gameState.movementIndicators.DeactivateAll();
-        }
-
-        m_oldMoveDisplay = gameState.displayMoveIndicators;
-
-    }
-
-    void HandleClick()
-    {
-        Vector2Int selectedBoardPosition = gameState.RaycastToBoardPosition();
-        if(m_selectedPiece.IsValidMove(selectedBoardPosition) && gameState.ValidBallPosition(selectedBoardPosition))
-        {
-            //List<ChessPiece> collidedPieces = m_selectedPiece.ProjectMovement(gameState.gameBoard, selectedBoardPosition);
             m_selectedPiece.DisableOutline();
-            gameState.currentSubState = new BallMoveState(m_selectedPiece, selectedBoardPosition);
+            gameState.currentSubState = new BallMoveState(m_selectedPiece, position);
 
-            if(SoundManager.Instance)
-            {
-                SoundManager.Instance.RandomSoundEffect(gameState.audioClipKickingArray);
-            }
+            SoundManager.Instance.RandomSoundEffect(gameState.audioClipKickingArray);
         }
     }
 
     void DisplayMoves()
     {
-        if(!gameState.displayMoveIndicators)
-            return;
         Color color = Color.blue;
         color.a = 0.5f;
-
 
         gameState.movementIndicators.SetColor(color);
 
         int tileDisplayIndex = 0;
         MovementIndicators indicators = gameState.movementIndicators;
-        foreach(var (position, occupied) in m_selectedPiece.GetValidPositions(false).Where(p => gameState.ValidBallPosition(p.Item1)))
+        foreach(var (position, occupied) in validPositions)
         {
             indicators.tiles[tileDisplayIndex].enabled = true;
             indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(position);
@@ -905,8 +869,6 @@ class ReturnPiecesState : GameSubState
 
     void DisplayMoves()
     {
-        if(!gameState.displayMoveIndicators)
-            return;
         MovementIndicators indicators = gameState.movementIndicators;
 
         Vector2Int boardSize = gameState.gameBoard.boardSize;
