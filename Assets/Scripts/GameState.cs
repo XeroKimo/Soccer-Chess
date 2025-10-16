@@ -638,14 +638,19 @@ class BallMoveState : GameSubState
 
     Vector3 m_targetWorldPos;
     float time = 0;
+    float speedMultiplier;
     Vector3 startingPos;
 
     public BallMoveState(ChessPiece kicker, Vector2Int targetBoardPos)
     {
         m_originalKicker = kicker;
-        m_targetBoardPos = targetBoardPos;
 
-        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(targetBoardPos);// + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
+        Vector2Int direction = targetBoardPos - kicker.position;
+        direction.Clamp(new Vector2Int(-1, -1), new Vector2Int(1, 1));
+
+        m_targetBoardPos = kicker.type == ChessType.Knight ? targetBoardPos : kicker.GetValidPositions(true, direction).Last().Item1;
+        speedMultiplier = Vector2Int.Distance(targetBoardPos, kicker.position) / Vector2Int.Distance(m_targetBoardPos, kicker.position);
+        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(m_targetBoardPos);// + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
         startingPos = gameState.soccerBall.transform.position;
 
         gameState.movementIndicators.DeactivateAll();
@@ -655,51 +660,29 @@ class BallMoveState : GameSubState
 
     public override void Update()
     {
-        MoveBall();
-    }
-
-    void MoveBall()
-    {
-        time += Time.deltaTime;
+        time += Time.deltaTime * speedMultiplier;
 
         gameState.soccerBall.transform.position = Vector3.Lerp(startingPos, m_targetWorldPos, time);
 
-        Vector2Int currentBallPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
-        ChessPiece chessPiece = gameState.gameBoard.GetPiece(currentBallPos) as ChessPiece;
-
-        if(chessPiece)
+        if(time >= 1)
         {
-            if(chessPiece != m_originalKicker && m_originalKicker.type != ChessType.Knight)
+            ChessPiece chessPiece = gameState.gameBoard.GetPiece(m_targetBoardPos);
+
+            if(chessPiece)
             {
                 gameState.currentSubState = new BallMoveInputState(chessPiece);
-                gameState.soccerBall.transform.position = (Vector3)((Vector2)chessPiece.transform.position) + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
             }
+            else if(gameState.IsInGoal(m_targetBoardPos))
+            {
+                gameState.currentSubState = new HandleGoalState();
+            }
+            else
+            {
+                gameState.currentSubState = new ReturnPiecesState();
+                gameState.gameBoard.PlacePiece(gameState.soccerBall, m_targetBoardPos);
+            }
+            gameState.soccerBall.GetComponentInChildren<ParticleSystem>().Stop();
         }
-
-        if(gameState.soccerBall.transform.position == m_targetWorldPos)
-        {
-            HandleMoveEnd();
-        }
-    }
-
-    void HandleMoveEnd()
-    {
-        ChessPiece chessPiece = gameState.gameBoard.GetPiece(m_targetBoardPos) as ChessPiece;
-
-        if(chessPiece)
-        {
-            gameState.currentSubState = new BallMoveInputState(chessPiece);
-        }
-        else if(gameState.IsInGoal(m_targetBoardPos))
-        {
-            gameState.currentSubState = new HandleGoalState();
-        }
-        else
-        {
-            gameState.currentSubState = new ReturnPiecesState();
-            gameState.gameBoard.PlacePiece(gameState.soccerBall, m_targetBoardPos);
-        }
-        gameState.soccerBall.GetComponentInChildren<ParticleSystem>().Stop();
     }
 
     public override void OnEnter()
