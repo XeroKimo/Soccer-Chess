@@ -59,7 +59,7 @@ public class ChessPiece : MonoBehaviour
 
     }
 
-    public bool CanMove(Vector2Int position)
+    public bool IsValidMove(Vector2Int position)
     {
         return type switch
         {
@@ -136,14 +136,17 @@ public class ChessPiece : MonoBehaviour
         positionDiff.x = Mathf.Abs(positionDiff.x);
         positionDiff.y = Mathf.Abs(positionDiff.y);
 
-        return positionDiff.x == positionDiff.y;
+        return positionDiff.x == positionDiff.y && positionDiff.x + positionDiff.y > 0;
     }
 
     public static bool CanMoveRook(Vector2Int currentPosition, Vector2Int position)
     {
         Vector2Int positionDiff = position - currentPosition;
 
-        return positionDiff.x == 0 || positionDiff.y == 0;
+        positionDiff.x = Mathf.Abs(positionDiff.x);
+        positionDiff.y = Mathf.Abs(positionDiff.y);
+
+        return (positionDiff.x == 0 || positionDiff.y == 0) && positionDiff.x + positionDiff.y > 0;
     }
 
     public static bool CanMoveQueen(Vector2Int currentPosition, Vector2Int position)
@@ -159,7 +162,7 @@ public class ChessPiece : MonoBehaviour
         positionDiff.y = Mathf.Abs(positionDiff.y);
 
 
-        return positionDiff.x < 2 && positionDiff.y < 2; //&& CanMoveQueen(piece, boardState, position);
+        return positionDiff.x < 2 && positionDiff.y < 2 && positionDiff.x + positionDiff.y > 0; //&& CanMoveQueen(piece, boardState, position);
     }
     private static IEnumerable<(Vector2Int, bool)> LinearEnumeration(Vector2Int currentPosition, GameBoard boardState, bool skipBlocked, Vector2Int direction, int? maxDistance)
     {
@@ -167,13 +170,11 @@ public class ChessPiece : MonoBehaviour
         Vector2Int position = currentPosition + direction;
         bool blocked = false;
         int distance = 0;
-        while (boardState.InRange(position) && distance < maxDistance.Value)
+        while (boardState.InRange(position) && distance < maxDistance.Value && !(blocked && skipBlocked))
         {
             ChessPiece occupiedPiece = boardState.GetPiece(position);
             yield return (position, blocked);
-            if (occupiedPiece && skipBlocked)
-                break;
-
+            blocked = blocked || occupiedPiece;
             position += direction;
             distance++;
         }
@@ -243,8 +244,7 @@ public class ChessPiece : MonoBehaviour
             Vector2Int position = currentPosition + offset;
             if (boardState.InRange(position))
             {
-                ChessPiece occupiedPiece = boardState.GetPiece(position);
-                yield return (position, occupiedPiece);
+                yield return (position, false);
             }
         }
     }
