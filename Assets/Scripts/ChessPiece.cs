@@ -174,7 +174,10 @@ public class ChessPiece : MonoBehaviour
         {
             ChessPiece occupiedPiece = boardState.GetPiece(position);
             yield return (position, blocked);
-            blocked = blocked || occupiedPiece;
+
+            //Hard coding the ball being ignored for block piecing for now, as there
+            //hasn't been a need to ignore anything else
+            blocked = blocked || (occupiedPiece && occupiedPiece.type != ChessType.Ball);
             position += direction;
             distance++;
         }

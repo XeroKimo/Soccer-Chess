@@ -246,6 +246,8 @@ public class GameState : MonoBehaviour
         playerOneField.ClearField();
         playerTwoField.ClearField();
 
+        gameBoard.RemovePiece(gameBoard.boardSize / 2);
+        gameBoard.PlacePiece(soccerBall, gameBoard.boardSize / 2);
         soccerBall.transform.position = gameBoard.CellPositionToWorldCenterPosition(gameBoard.boardSize / 2) - new Vector3(0, 0, 9);
     }
 
@@ -487,7 +489,7 @@ class PlayerMoveInputState : GameSubState
 
         int tileDisplayIndex = 0;
         MovementIndicators indicators = gameState.movementIndicators;
-        Vector2Int ballBoardPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
+
         foreach(var (position, blocked) in m_selectedPiece.GetValidPositions(true).Where(p => gameState.IsInField(p.Item1)))
         {
             ChessPiece piece = gameState.gameBoard.GetPiece(position);
@@ -495,7 +497,7 @@ class PlayerMoveInputState : GameSubState
             indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(position);
             if(piece)
                 indicators.tiles[tileDisplayIndex].color = Color.red - new Color(0, 0, 0, 0.5f);
-            else if(position == ballBoardPos)
+            else if(position == gameState.soccerBall.position)
                 indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
 
             tileDisplayIndex++;
@@ -521,12 +523,11 @@ class PlayerMoveState : GameSubState
 
     Vector2 m_targetWorldPos;
 
-    float time = 0;
-
-    float timeStretch;
+    float distanceTravelled = 0;
+    float totalDistance;
     Vector3 startingPos;
 
-    const float movementSpeed = 7;
+    const float movementSpeed = 21;
     public PlayerMoveState(ChessPiece possessingPiece, Vector2Int targetBoardPos)
     {
         m_possessingPiece = possessingPiece;
@@ -534,73 +535,42 @@ class PlayerMoveState : GameSubState
 
         Vector2Int posDiff = targetBoardPos - m_possessingPiece.position;
 
-        if(Mathf.Abs(posDiff.x) > Mathf.Abs(posDiff.y))
-            timeStretch = Mathf.Abs(posDiff.x);
-        else
-            timeStretch = Mathf.Abs(posDiff.y);
-
         startingPos = m_possessingPiece.transform.position;
 
         gameState.movementIndicators.DeactivateAll();
-        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(targetBoardPos) - new Vector3(0, 0, gameState.gameBoard.boardSize.y - m_targetBoardPos.y);
+        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(targetBoardPos);// - new Vector3(0, 0, gameState.gameBoard.boardSize.y - m_targetBoardPos.y);
+        totalDistance = Vector3.Distance(m_targetWorldPos, startingPos);
     }
 
     public override void Update()
     {
-        MoveUnit();
-    }
+        distanceTravelled += movementSpeed * Time.deltaTime;
 
-    void MoveUnit()
-    {
-        time += Time.deltaTime / timeStretch * movementSpeed;
+        m_possessingPiece.transform.position = Vector3.Lerp(startingPos, m_targetWorldPos, Mathf.InverseLerp(0, totalDistance, distanceTravelled));
 
-        m_possessingPiece.transform.position = Vector3.Lerp(startingPos, m_targetWorldPos, time);
-
-        if(SoundManager.Instance)
+        SoundManager.Instance.RandomSoundEffect(gameState.audioClipWalkingArray);
+        if(distanceTravelled >= totalDistance)
         {
-            SoundManager.Instance.RandomSoundEffect(gameState.audioClipWalkingArray);
-        }
-        if((Vector2)m_possessingPiece.transform.position == m_targetWorldPos)
-        {
-            HandleMoveEnd();
-        }
-    }
+            ChessPiece removedPiece = gameState.gameBoard.MovePiece(m_possessingPiece, m_targetBoardPos);
 
-    void HandleMoveEnd()
-    {
-        Vector2Int ballBoardPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
-        ChessPiece chessPiece = gameState.gameBoard.GetPiece(m_targetBoardPos) as ChessPiece;
-
-        bool collidedWithBall = false;
-        if(ballBoardPos == m_targetBoardPos)
-        {
-            collidedWithBall = true;
-        }
-        else if(chessPiece)
-        {
-            //Add piece to the remove list
-            if(SoundManager.Instance)
+            if(removedPiece)
             {
-                SoundManager.Instance.Play(gameState.Hit);
-            }
-
-            gameState.gameBoard.RemovePiece(chessPiece);
-            if(gameState.currentPlayerTurn == 0)
-            {
-                gameState.playerTwoField.CaptureTarget(chessPiece);
+                if(removedPiece.type == ChessType.Ball)
+                {
+                    gameState.currentSubState = new BallMoveInputState(m_possessingPiece);
+                }
+                else
+                {
+                    SoundManager.Instance.Play(gameState.Hit);
+                    (gameState.currentPlayerTurn == 0 ? gameState.playerTwoField : gameState.playerOneField).CaptureTarget(removedPiece);
+                    gameState.currentSubState = new ReturnPiecesState();
+                }
             }
             else
             {
-                gameState.playerOneField.CaptureTarget(chessPiece);
+                gameState.currentSubState = new ReturnPiecesState();
             }
         }
-
-        gameState.gameBoard.MovePiece(m_possessingPiece, m_targetBoardPos);
-
-        if(collidedWithBall)
-            gameState.currentSubState = new BallMoveInputState(m_possessingPiece);
-        else
-            gameState.currentSubState = new ReturnPiecesState();
     }
 
     public override void OnEnter()
@@ -678,8 +648,7 @@ class BallMoveInputState : GameSubState
 
         int tileDisplayIndex = 0;
         MovementIndicators indicators = gameState.movementIndicators;
-        Vector2Int ballBoardPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
-        foreach(var (position, occupied) in m_selectedPiece.GetValidPositions(false).Where(p => gameState.IsInField(p.Item1) || gameState.ValidBallPosition(p.Item1)))
+        foreach(var (position, occupied) in m_selectedPiece.GetValidPositions(false).Where(p => gameState.ValidBallPosition(p.Item1)))
         {
             indicators.tiles[tileDisplayIndex].enabled = true;
             indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(position);
@@ -712,7 +681,7 @@ class BallMoveState : GameSubState
         m_originalKicker = kicker;
         m_targetBoardPos = targetBoardPos;
 
-        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(targetBoardPos) + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
+        m_targetWorldPos = (Vector3)gameState.gameBoard.CellPositionToWorldCenterPosition(targetBoardPos);// + new Vector3(0, 0, gameState.soccerBall.transform.position.z);
         startingPos = gameState.soccerBall.transform.position;
 
         gameState.movementIndicators.DeactivateAll();
@@ -764,6 +733,7 @@ class BallMoveState : GameSubState
         else
         {
             gameState.currentSubState = new ReturnPiecesState();
+            gameState.gameBoard.PlacePiece(gameState.soccerBall, m_targetBoardPos);
         }
         gameState.soccerBall.GetComponentInChildren<ParticleSystem>().Stop();
     }
@@ -883,9 +853,8 @@ class ReturnPiecesState : GameSubState
     {
         Vector2Int selectedBoardPos = gameState.RaycastToBoardPosition();
 
-        Vector2Int soccerBallPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
 
-        placedOnBall = selectedBoardPos == soccerBallPos;
+        placedOnBall = selectedBoardPos == gameState.soccerBall.position;
         if(gameState.currentPlayerTurn == 0)
         {
             if(selectedBoardPos.x < 3 &&
@@ -945,8 +914,6 @@ class ReturnPiecesState : GameSubState
         int tileDisplayIndex = 0;
         indicators.SetColor(Color.red - new Color(0, 0, 0, 1));
 
-        Vector2Int soccerBallPos = gameState.gameBoard.WorldPositionToCellPosition(gameState.soccerBall.transform.position);
-
         if(gameState.currentPlayerTurn == 0)
         {
             for(int y = 0; y < boardSize.y; y++)
@@ -959,7 +926,7 @@ class ReturnPiecesState : GameSubState
                         indicators.tiles[tileDisplayIndex].enabled = true;
                         indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(boardPos);
 
-                        if(boardPos == soccerBallPos)
+                        if(boardPos == gameState.soccerBall.position)
                             indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
 
                         tileDisplayIndex++;
@@ -978,7 +945,7 @@ class ReturnPiecesState : GameSubState
                     {
                         indicators.tiles[tileDisplayIndex].enabled = true;
                         indicators.tiles[tileDisplayIndex].transform.position = gameState.gameBoard.CellPositionToWorldCenterPosition(boardPos);
-                        if(boardPos == soccerBallPos)
+                        if(boardPos == gameState.soccerBall.position)
                             indicators.tiles[tileDisplayIndex].color = Color.blue - new Color(0, 0, 0, 0.5f);
 
                         tileDisplayIndex++;
